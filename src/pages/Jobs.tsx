@@ -9,36 +9,37 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
 
-const jobListings = [
-  {
-    title: "Software Engineer",
-    type: "Full-time",
-    location: "San Francisco",
-    description: "Join a leading tech company in the heart of Silicon Valley.",
-  },
-  {
-    title: "Marketing Specialist",
-    type: "Remote, Flexible",
-    location: "",
-    description: "Utilize your creative skills to drive marketing initiatives.",
-  },
-  {
-    title: "Data Analyst",
-    type: "Part-time",
-    location: "New York City",
-    description: "Analyze data trends for a dynamic startup.",
-  },
-];
+interface RemotiveJob {
+  id: number;
+  url: string;
+  title: string;
+  company_name: string;
+  category: string;
+  job_type: string;
+  candidate_required_location: string;
+  salary: string;
+  description: string;
+}
 
 const jobCategories = [
-  { name: "Technology", color: "bg-[#E5DEFF]" },
-  { name: "Marketing", color: "bg-[#FEF7CD]" },
-  { name: "Finance", color: "bg-[#F2FCE2]" },
+  { name: "Software Development", color: "bg-[#E5DEFF]" },
+  { name: "Customer Service", color: "bg-[#FEF7CD]" },
+  { name: "Marketing", color: "bg-[#F2FCE2]" },
   { name: "Design", color: "bg-[#FFDEE2]" },
-  { name: "Healthcare", color: "bg-[#D3E4FD]" },
-  { name: "Remote", color: "bg-[#FDE1D3]" },
+  { name: "Sales", color: "bg-[#D3E4FD]" },
+  { name: "All Remote", color: "bg-[#FDE1D3]" },
 ];
+
+const fetchJobs = async () => {
+  const response = await fetch('https://remotive.com/api/remote-jobs');
+  if (!response.ok) {
+    throw new Error('Failed to fetch jobs');
+  }
+  const data = await response.json();
+  return data.jobs as RemotiveJob[];
+};
 
 export default function Jobs() {
   const navigate = useNavigate();
@@ -49,8 +50,13 @@ export default function Jobs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const readJobDescription = async (job: typeof jobListings[0]) => {
-    const jobText = `${job.title}. ${job.type}${job.location ? `, located in ${job.location}` : ''}. ${job.description}`;
+  const { data: jobs, isLoading, error } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: fetchJobs,
+  });
+
+  const readJobDescription = async (job: RemotiveJob) => {
+    const jobText = `${job.title}. Position at ${job.company_name}. ${job.job_type} role${job.candidate_required_location ? `, ${job.candidate_required_location}` : ''}. ${job.salary ? `Salary: ${job.salary}.` : ''} ${job.description.slice(0, 200)}...`;
     
     try {
       const {
@@ -102,20 +108,19 @@ export default function Jobs() {
     setSelectedCategory(selectedCategory === category ? null : category);
   };
 
-  const filteredJobs = jobListings.filter(job => {
+  const filteredJobs = jobs?.filter(job => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = 
       job.title.toLowerCase().includes(searchLower) ||
-      job.type.toLowerCase().includes(searchLower) ||
-      job.location.toLowerCase().includes(searchLower) ||
+      job.company_name.toLowerCase().includes(searchLower) ||
+      job.candidate_required_location.toLowerCase().includes(searchLower) ||
       job.description.toLowerCase().includes(searchLower);
 
     const matchesCategory = !selectedCategory || 
-      (job.type.toLowerCase().includes(selectedCategory.toLowerCase()) ||
-       job.title.toLowerCase().includes(selectedCategory.toLowerCase()));
+      job.category.toLowerCase().includes(selectedCategory.toLowerCase());
 
     return matchesSearch && matchesCategory;
-  });
+  }) || [];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -148,7 +153,7 @@ export default function Jobs() {
       </nav>
 
       <div className="flex-1 container px-4 sm:px-6 py-4 sm:py-6 mx-auto space-y-6 sm:space-y-8 animate-fade-in max-w-[100%] sm:max-w-xl lg:max-w-2xl">
-        <h1 className="text-xl sm:text-2xl font-semibold">Job Listings</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold">Remote Job Listings</h1>
 
         <div className="space-y-4">
           <div className="relative">
@@ -183,36 +188,46 @@ export default function Jobs() {
 
         <Card className="w-full">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-lg sm:text-xl">Job Listings Summary</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Remote Job Opportunities</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
-            <h3 className="font-semibold text-base sm:text-lg">Latest Job Recommendations</h3>
+            <h3 className="font-semibold text-base sm:text-lg">Latest Remote Jobs</h3>
             <p className="text-sm text-muted-foreground">
-              Explore the latest job opportunities tailored to your preferences.
+              Explore the latest remote job opportunities from companies worldwide.
             </p>
           </CardContent>
         </Card>
 
         <div>
-          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Job Recommendations</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Available Positions</h2>
           <div className="space-y-3 sm:space-y-4">
-            {filteredJobs.length === 0 ? (
+            {isLoading ? (
+              <Card className="p-6 text-center">
+                <p className="text-muted-foreground">Loading jobs...</p>
+              </Card>
+            ) : error ? (
+              <Card className="p-6 text-center">
+                <p className="text-red-500">Error loading jobs. Please try again later.</p>
+              </Card>
+            ) : filteredJobs.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">
                 <p>No jobs found matching your search criteria</p>
               </Card>
             ) : (
-              filteredJobs.map((job, index) => (
-                <Card key={index} className="overflow-hidden">
+              filteredJobs.map((job) => (
+                <Card key={job.id} className="overflow-hidden">
                   <div className="p-4 sm:p-6">
                     <CardTitle className="text-base sm:text-lg mb-1">{job.title}</CardTitle>
-                    <CardDescription className={cn(
-                      "text-xs sm:text-sm mb-2",
-                      job.location ? "text-muted-foreground" : "text-primary/80"
-                    )}>
-                      {job.type}
-                      {job.location && `, ${job.location}`}
+                    <CardDescription className="text-xs sm:text-sm mb-2">
+                      {job.company_name} • {job.job_type || 'Full Time'}
+                      {job.candidate_required_location && ` • ${job.candidate_required_location}`}
                     </CardDescription>
-                    <p className="text-xs sm:text-sm mb-3 sm:mb-4">{job.description}</p>
+                    {job.salary && (
+                      <p className="text-xs sm:text-sm text-primary mb-2">{job.salary}</p>
+                    )}
+                    <p className="text-xs sm:text-sm mb-3 sm:mb-4">
+                      {job.description.slice(0, 200)}...
+                    </p>
                     <div className="flex justify-end gap-2">
                       {screenReaderEnabled && (
                         <Button 
@@ -225,8 +240,13 @@ export default function Jobs() {
                           {isPlaying ? "Playing..." : "Read Description"}
                         </Button>
                       )}
-                      <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-                        Read Job Details
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs sm:text-sm"
+                        onClick={() => window.open(job.url, '_blank')}
+                      >
+                        View Job Details
                       </Button>
                     </div>
                   </div>
@@ -236,8 +256,11 @@ export default function Jobs() {
           </div>
         </div>
 
-        <Button className="w-full bg-muted text-muted-foreground hover:bg-muted/80 text-xs sm:text-sm py-5 sm:py-6">
-          More Jobs
+        <Button 
+          className="w-full bg-muted text-muted-foreground hover:bg-muted/80 text-xs sm:text-sm py-5 sm:py-6"
+          onClick={() => window.location.reload()}
+        >
+          Refresh Jobs
         </Button>
       </div>
 
