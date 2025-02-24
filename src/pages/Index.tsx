@@ -49,11 +49,11 @@ const Index = () => {
           
           <Button 
             variant="secondary"
-            className="w-full py-6 text-base"
+            className="w-full py-4 text-base flex flex-col gap-1 items-center"
             onClick={toggleVoiceOver}
           >
             Enable VoiceOver/TalkBack
-            <span className="text-sm text-muted-foreground block">
+            <span className="text-sm text-muted-foreground">
               Screen reader assistance available
             </span>
           </Button>
