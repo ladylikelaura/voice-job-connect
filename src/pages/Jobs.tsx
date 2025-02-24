@@ -1,10 +1,11 @@
 
-import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound } from "lucide-react";
+import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const jobListings = [
   {
@@ -30,6 +31,17 @@ const jobListings = [
 export default function Jobs() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+
+  const toggleScreenReader = () => {
+    setScreenReaderEnabled(!screenReaderEnabled);
+    // You would implement actual screen reader functionality here
+    if (!screenReaderEnabled) {
+      toast.success("Screen reader enabled");
+    } else {
+      toast.success("Screen reader disabled");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -40,6 +52,19 @@ export default function Jobs() {
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
           <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleScreenReader}
+              aria-label={screenReaderEnabled ? "Disable screen reader" : "Enable screen reader"}
+              className={cn(
+                "flex items-center gap-2",
+                screenReaderEnabled && "bg-primary text-primary-foreground hover:bg-primary/90"
+              )}
+            >
+              <Headphones className="w-4 h-4" />
+              <span className="sr-only">{screenReaderEnabled ? "Disable" : "Enable"} screen reader</span>
+            </Button>
             {user && (
               <Button variant="outline" size="sm" onClick={() => signOut()}>
                 Sign Out
