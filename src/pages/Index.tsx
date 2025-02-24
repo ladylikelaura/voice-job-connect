@@ -2,9 +2,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Index = () => {
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
@@ -13,8 +17,42 @@ const Index = () => {
 
   const toggleVoiceOver = () => {
     setIsVoiceEnabled(!isVoiceEnabled);
-    // Here you would typically integrate with the device's accessibility services
-    console.log("VoiceOver/TalkBack toggled");
+    if (!isVoiceEnabled) {
+      readWelcomeMessage();
+    }
+  };
+
+  const readWelcomeMessage = async () => {
+    const welcomeText = "Welcome to the Job Recruiting App! Learn about our job search process where we make job opportunities accessible for everyone.";
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { text: welcomeText }
+      });
+
+      if (error) throw error;
+
+      if (data.audio) {
+        if (audioElement) {
+          audioElement.pause();
+        }
+
+        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+        setAudioElement(audio);
+        
+        audio.onplay = () => setIsPlaying(true);
+        audio.onended = () => setIsPlaying(false);
+        audio.onerror = () => {
+          setIsPlaying(false);
+          toast.error("Error playing audio");
+        };
+
+        await audio.play();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to convert text to speech");
+    }
   };
 
   return (
@@ -52,8 +90,9 @@ const Index = () => {
             variant="secondary"
             className="w-full py-4 text-base flex flex-col gap-1 items-center"
             onClick={toggleVoiceOver}
+            aria-pressed={isVoiceEnabled}
           >
-            Enable VoiceOver/TalkBack
+            {isPlaying ? "Playing..." : "Enable VoiceOver"}
             <span className="text-sm text-muted-foreground">
               Screen reader assistance available
             </span>
