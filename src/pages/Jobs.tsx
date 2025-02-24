@@ -139,16 +139,20 @@ export default function Jobs() {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
-              size="sm"
+              size="lg"
               onClick={toggleScreenReader}
               aria-label={screenReaderEnabled ? "Disable screen reader" : "Enable screen reader"}
               className={cn(
-                "flex items-center gap-2",
-                screenReaderEnabled && "bg-primary text-primary-foreground hover:bg-primary/90"
+                "flex items-center gap-2 px-6 py-6 text-base font-medium transition-all duration-200",
+                screenReaderEnabled 
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 border-4 border-primary" 
+                  : "hover:bg-accent hover:text-accent-foreground border-2"
               )}
             >
-              <Headphones className="w-4 h-4" />
-              <span className="sr-only">{screenReaderEnabled ? "Disable" : "Enable"} screen reader</span>
+              <Headphones className="w-6 h-6" />
+              <span className="hidden sm:inline">
+                {screenReaderEnabled ? "Screen Reader On" : "Screen Reader Off"}
+              </span>
             </Button>
             {user && (
               <Button variant="outline" size="sm" onClick={() => signOut()}>
