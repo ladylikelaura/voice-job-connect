@@ -1,13 +1,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
+  const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    // Navigate to jobs page or next step
-    console.log("Get Started clicked");
+    navigate('/auth');
   };
 
   const toggleVoiceOver = () => {
