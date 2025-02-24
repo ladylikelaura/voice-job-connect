@@ -1,5 +1,5 @@
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -101,15 +101,22 @@ export default function Jobs() {
 
       {/* Bottom Navigation Bar */}
       <nav className="border-t px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex justify-center space-x-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="text-primary">
-            Jobs
+        <div className="flex justify-between max-w-md mx-auto">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="flex flex-col items-center gap-1 h-auto py-2 text-primary">
+            <Briefcase className="w-5 h-5" />
+            <span className="text-xs">Jobs</span>
           </Button>
-          <Button variant="ghost" size="sm">
-            Saved
+          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+            <Bookmark className="w-5 h-5" />
+            <span className="text-xs">Saved</span>
           </Button>
-          <Button variant="ghost" size="sm">
-            Profile
+          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+            <Clock className="w-5 h-5" />
+            <span className="text-xs">Status</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+            <UserRound className="w-5 h-5" />
+            <span className="text-xs">Profile</span>
           </Button>
         </div>
       </nav>
