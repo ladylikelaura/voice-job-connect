@@ -29,10 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event, session); // Debug log
       if (session?.user) {
         setUser(session.user);
         navigate('/dashboard');
-        toast.success('Successfully signed in with Google!');
+        toast.success('Successfully signed in!');
       } else {
         setUser(null);
       }
@@ -73,20 +74,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      console.log('Starting Google sign in...'); // Debug log
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`,
+          redirectTo: `${window.location.origin}/auth`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         },
       });
-      if (error) throw error;
-      if (!data.url) throw new Error('No URL returned from OAuth provider');
       
-      // Redirect to the OAuth URL
+      if (error) {
+        console.error('Supabase OAuth error:', error); // Debug log
+        throw error;
+      }
+      
+      if (!data.url) {
+        console.error('No OAuth URL returned'); // Debug log
+        throw new Error('No URL returned from OAuth provider');
+      }
+      
+      console.log('Redirecting to:', data.url); // Debug log
       window.location.href = data.url;
     } catch (error: any) {
       console.error('Google Sign In Error:', error);
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to sign in with Google');
       throw error;
     }
   };
