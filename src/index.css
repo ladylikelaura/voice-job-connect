@@ -42,3 +42,9 @@
     @apply bg-card p-6 rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200;
   }
 }
+
+@layer components {
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+}
