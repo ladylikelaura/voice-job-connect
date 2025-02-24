@@ -32,6 +32,12 @@ const jobCategories = [
   { name: "All Remote", color: "bg-[#FDE1D3]" },
 ];
 
+const stripHtmlTags = (html: string) => {
+  const tmp = document.createElement('DIV');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+};
+
 const fetchJobs = async () => {
   const response = await fetch('https://remotive.com/api/remote-jobs');
   if (!response.ok) {
@@ -56,7 +62,8 @@ export default function Jobs() {
   });
 
   const readJobDescription = async (job: RemotiveJob) => {
-    const jobText = `${job.title}. Position at ${job.company_name}. ${job.job_type} role${job.candidate_required_location ? `, ${job.candidate_required_location}` : ''}. ${job.salary ? `Salary: ${job.salary}.` : ''} ${job.description.slice(0, 200)}...`;
+    const cleanDescription = stripHtmlTags(job.description);
+    const jobText = `${job.title}. Position at ${job.company_name}. ${job.job_type} role${job.candidate_required_location ? `, ${job.candidate_required_location}` : ''}. ${job.salary ? `Salary: ${job.salary}.` : ''} ${cleanDescription.slice(0, 200)}...`;
     
     try {
       const {
@@ -114,7 +121,7 @@ export default function Jobs() {
       job.title.toLowerCase().includes(searchLower) ||
       job.company_name.toLowerCase().includes(searchLower) ||
       job.candidate_required_location.toLowerCase().includes(searchLower) ||
-      job.description.toLowerCase().includes(searchLower);
+      stripHtmlTags(job.description).toLowerCase().includes(searchLower);
 
     const matchesCategory = !selectedCategory || 
       job.category.toLowerCase().includes(selectedCategory.toLowerCase());
@@ -226,7 +233,7 @@ export default function Jobs() {
                       <p className="text-xs sm:text-sm text-primary mb-2">{job.salary}</p>
                     )}
                     <p className="text-xs sm:text-sm mb-3 sm:mb-4">
-                      {job.description.slice(0, 200)}...
+                      {stripHtmlTags(job.description).slice(0, 200)}...
                     </p>
                     <div className="flex justify-end gap-2">
                       {screenReaderEnabled && (
