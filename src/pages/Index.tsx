@@ -57,12 +57,8 @@ const Index = () => {
 
         {/* Welcome Text */}
         <div className="text-center space-y-4 px-4">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Welcome to the Job Recruiting App!
-          </h1>
-          <p className="text-muted-foreground">
-            Learn about our job search process where we make job opportunities accessible for everyone.
-          </p>
+          <h1 className="text-2xl font-semibold text-foreground">Welcome to the Jobbify!</h1>
+          <p className="text-muted-foreground">Learn about our job search process where we make job opportunities accessible for everyone.</p>
         </div>
 
         {/* CTA Buttons */}
