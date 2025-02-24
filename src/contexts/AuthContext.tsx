@@ -70,15 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}`,
         },
       });
       if (error) throw error;
     } catch (error: any) {
+      console.error('Google Sign In Error:', error);
       toast.error(error.message);
       throw error;
     }
