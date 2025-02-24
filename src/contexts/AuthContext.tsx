@@ -87,17 +87,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) {
-        console.error('Supabase OAuth error:', error); // Debug log
+        console.error('Supabase OAuth error:', error);
         throw error;
       }
       
       if (!data.url) {
-        console.error('No OAuth URL returned'); // Debug log
+        console.error('No OAuth URL returned');
         throw new Error('No URL returned from OAuth provider');
       }
       
-      console.log('Redirecting to:', data.url); // Debug log
-      window.location.href = data.url;
+      // Open in a new tab instead of same window
+      console.log('Opening auth URL in new tab:', data.url);
+      window.open(data.url, '_blank', 'noopener,noreferrer');
     } catch (error: any) {
       console.error('Google Sign In Error:', error);
       toast.error(error.message || 'Failed to sign in with Google');
