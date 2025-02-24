@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Auth state changed:', _event, session); // Debug log
       if (session?.user) {
         setUser(session.user);
-        navigate('/dashboard');
+        navigate('/jobs'); // Changed from /dashboard to /jobs
         toast.success('Successfully signed in!');
       } else {
         setUser(null);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
       if (error) throw error;
-      navigate('/dashboard');
+      navigate('/jobs'); // Changed from /dashboard to /jobs
       toast.success('Welcome back!');
     } catch (error: any) {
       toast.error(error.message);
