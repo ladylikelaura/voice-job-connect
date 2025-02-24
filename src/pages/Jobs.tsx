@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const jobListings = [
   {
@@ -33,20 +34,60 @@ export default function Jobs() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  const readJobDescription = async (job: typeof jobListings[0]) => {
+    const jobText = `${job.title}. ${job.type}${job.location ? `, located in ${job.location}` : ''}. ${job.description}`;
+    
+    try {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: jobText
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.audio) {
+        if (audioElement) {
+          audioElement.pause();
+        }
+        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+        setAudioElement(audio);
+        audio.onplay = () => setIsPlaying(true);
+        audio.onended = () => setIsPlaying(false);
+        audio.onerror = () => {
+          setIsPlaying(false);
+          toast.error("Error playing audio");
+        };
+        await audio.play();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to convert text to speech");
+    }
+  };
 
   const toggleScreenReader = () => {
     setScreenReaderEnabled(!screenReaderEnabled);
-    // You would implement actual screen reader functionality here
     if (!screenReaderEnabled) {
       toast.success("Screen reader enabled");
     } else {
+      if (audioElement) {
+        audioElement.pause();
+        setAudioElement(null);
+      }
+      setIsPlaying(false);
       toast.success("Screen reader disabled");
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Top Navigation Bar */}
       <nav className="border-b px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate(-1)}>
@@ -75,11 +116,9 @@ export default function Jobs() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <div className="flex-1 container px-4 sm:px-6 py-4 sm:py-6 mx-auto space-y-6 sm:space-y-8 animate-fade-in max-w-[100%] sm:max-w-xl lg:max-w-2xl">
         <h1 className="text-xl sm:text-2xl font-semibold">Job Listings</h1>
 
-        {/* Summary Card */}
         <Card className="w-full">
           <CardHeader className="p-4 sm:p-6">
             <CardTitle className="text-lg sm:text-xl">Job Listings Summary</CardTitle>
@@ -92,7 +131,6 @@ export default function Jobs() {
           </CardContent>
         </Card>
 
-        {/* Job Recommendations */}
         <div>
           <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Job Recommendations</h2>
           <div className="space-y-3 sm:space-y-4">
@@ -108,7 +146,18 @@ export default function Jobs() {
                     {job.location && `, ${job.location}`}
                   </CardDescription>
                   <p className="text-xs sm:text-sm mb-3 sm:mb-4">{job.description}</p>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    {screenReaderEnabled && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => readJobDescription(job)}
+                        disabled={isPlaying}
+                        className="text-xs sm:text-sm"
+                      >
+                        {isPlaying ? "Playing..." : "Read Description"}
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" className="text-xs sm:text-sm">
                       Read Job Details
                     </Button>
@@ -119,13 +168,11 @@ export default function Jobs() {
           </div>
         </div>
 
-        {/* More Jobs Button */}
         <Button className="w-full bg-muted text-muted-foreground hover:bg-muted/80 text-xs sm:text-sm py-5 sm:py-6">
           More Jobs
         </Button>
       </div>
 
-      {/* Bottom Navigation Bar */}
       <nav className="border-t px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex justify-between max-w-md mx-auto">
           <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="flex flex-col items-center gap-1 h-auto py-2 text-primary">
