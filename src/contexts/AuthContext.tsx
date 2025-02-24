@@ -29,12 +29,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setUser(session.user);
+        navigate('/dashboard');
+        toast.success('Successfully signed in with Google!');
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -67,13 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}`,
         },
       });
       if (error) throw error;
+      if (!data.url) throw new Error('No URL returned from OAuth provider');
+      
+      // Redirect to the OAuth URL
+      window.location.href = data.url;
     } catch (error: any) {
       console.error('Google Sign In Error:', error);
       toast.error(error.message);
