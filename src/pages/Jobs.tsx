@@ -1,5 +1,4 @@
-
-import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones } from "lucide-react";
+import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -8,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 const jobListings = [
   {
@@ -30,12 +30,23 @@ const jobListings = [
   },
 ];
 
+const jobCategories = [
+  { name: "Technology", color: "bg-[#E5DEFF]" },
+  { name: "Marketing", color: "bg-[#FEF7CD]" },
+  { name: "Finance", color: "bg-[#F2FCE2]" },
+  { name: "Design", color: "bg-[#FFDEE2]" },
+  { name: "Healthcare", color: "bg-[#D3E4FD]" },
+  { name: "Remote", color: "bg-[#FDE1D3]" },
+];
+
 export default function Jobs() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const readJobDescription = async (job: typeof jobListings[0]) => {
     const jobText = `${job.title}. ${job.type}${job.location ? `, located in ${job.location}` : ''}. ${job.description}`;
@@ -86,6 +97,10 @@ export default function Jobs() {
     }
   };
 
+  const handleCategoryClick = (category: string) => {
+    setSelectedCategory(selectedCategory === category ? null : category);
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <nav className="border-b px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -118,6 +133,37 @@ export default function Jobs() {
 
       <div className="flex-1 container px-4 sm:px-6 py-4 sm:py-6 mx-auto space-y-6 sm:space-y-8 animate-fade-in max-w-[100%] sm:max-w-xl lg:max-w-2xl">
         <h1 className="text-xl sm:text-2xl font-semibold">Job Listings</h1>
+
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search jobs..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {jobCategories.map((category) => (
+              <Button
+                key={category.name}
+                variant="outline"
+                size="sm"
+                onClick={() => handleCategoryClick(category.name)}
+                className={cn(
+                  "rounded-full transition-all duration-200 border-2",
+                  category.color,
+                  selectedCategory === category.name ? "ring-2 ring-primary ring-offset-2" : ""
+                )}
+              >
+                {category.name}
+              </Button>
+            ))}
+          </div>
+        </div>
 
         <Card className="w-full">
           <CardHeader className="p-4 sm:p-6">
