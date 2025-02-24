@@ -1,3 +1,4 @@
+
 import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,6 +102,21 @@ export default function Jobs() {
     setSelectedCategory(selectedCategory === category ? null : category);
   };
 
+  const filteredJobs = jobListings.filter(job => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      job.title.toLowerCase().includes(searchLower) ||
+      job.type.toLowerCase().includes(searchLower) ||
+      job.location.toLowerCase().includes(searchLower) ||
+      job.description.toLowerCase().includes(searchLower);
+
+    const matchesCategory = !selectedCategory || 
+      (job.type.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+       job.title.toLowerCase().includes(selectedCategory.toLowerCase()));
+
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="flex flex-col min-h-screen">
       <nav className="border-b px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -180,37 +196,43 @@ export default function Jobs() {
         <div>
           <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Job Recommendations</h2>
           <div className="space-y-3 sm:space-y-4">
-            {jobListings.map((job, index) => (
-              <Card key={index} className="overflow-hidden">
-                <div className="p-4 sm:p-6">
-                  <CardTitle className="text-base sm:text-lg mb-1">{job.title}</CardTitle>
-                  <CardDescription className={cn(
-                    "text-xs sm:text-sm mb-2",
-                    job.location ? "text-muted-foreground" : "text-primary/80"
-                  )}>
-                    {job.type}
-                    {job.location && `, ${job.location}`}
-                  </CardDescription>
-                  <p className="text-xs sm:text-sm mb-3 sm:mb-4">{job.description}</p>
-                  <div className="flex justify-end gap-2">
-                    {screenReaderEnabled && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => readJobDescription(job)}
-                        disabled={isPlaying}
-                        className="text-xs sm:text-sm"
-                      >
-                        {isPlaying ? "Playing..." : "Read Description"}
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-                      Read Job Details
-                    </Button>
-                  </div>
-                </div>
+            {filteredJobs.length === 0 ? (
+              <Card className="p-6 text-center text-muted-foreground">
+                <p>No jobs found matching your search criteria</p>
               </Card>
-            ))}
+            ) : (
+              filteredJobs.map((job, index) => (
+                <Card key={index} className="overflow-hidden">
+                  <div className="p-4 sm:p-6">
+                    <CardTitle className="text-base sm:text-lg mb-1">{job.title}</CardTitle>
+                    <CardDescription className={cn(
+                      "text-xs sm:text-sm mb-2",
+                      job.location ? "text-muted-foreground" : "text-primary/80"
+                    )}>
+                      {job.type}
+                      {job.location && `, ${job.location}`}
+                    </CardDescription>
+                    <p className="text-xs sm:text-sm mb-3 sm:mb-4">{job.description}</p>
+                    <div className="flex justify-end gap-2">
+                      {screenReaderEnabled && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => readJobDescription(job)}
+                          disabled={isPlaying}
+                          className="text-xs sm:text-sm"
+                        >
+                          {isPlaying ? "Playing..." : "Read Description"}
+                        </Button>
+                      )}
+                      <Button variant="outline" size="sm" className="text-xs sm:text-sm">
+                        Read Job Details
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </div>
 
