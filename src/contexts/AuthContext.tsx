@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/auth`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -96,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No URL returned from OAuth provider');
       }
       
-      // Redirect in same window for better flow
+      // Open in a new tab for better UX
+      console.log('Opening auth URL:', data.url);
       window.location.href = data.url;
     } catch (error: any) {
       console.error('Google Sign In Error:', error);
