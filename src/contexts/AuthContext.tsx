@@ -96,9 +96,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No URL returned from OAuth provider');
       }
       
-      // Open in a new tab for better UX
-      console.log('Opening auth URL:', data.url);
-      window.location.href = data.url;
+      // Handle iframe-specific navigation
+      if (window.parent !== window) {
+        // If we're in an iframe, send a message to the parent
+        window.parent.postMessage({ type: 'navigate', url: data.url }, '*');
+      } else {
+        // If we're not in an iframe, redirect normally
+        window.location.href = data.url;
+      }
     } catch (error: any) {
       console.error('Google Sign In Error:', error);
       toast.error(error.message || 'Failed to sign in with Google');
