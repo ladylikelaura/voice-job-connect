@@ -24,25 +24,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active sessions and subscribe to auth changes
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser(session.user);
-        navigate('/jobs');
-      } else {
-        setUser(null);
-      }
+      setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        navigate('/jobs');
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('Auth state changed:', _event, session); // Debug log
-      if (session?.user) {
-        setUser(session.user);
-        navigate('/jobs'); // Ensure redirect to jobs page
-        toast.success('Successfully signed in!');
-      } else {
-        setUser(null);
-      }
+      setUser(session?.user ?? null);
       setLoading(false);
+      
+      if (session?.user) {
+        navigate('/jobs');
+        toast.success('Successfully signed in!');
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -69,8 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
       if (error) throw error;
-      navigate('/jobs'); // Ensure redirect to jobs page
-      toast.success('Welcome back!');
     } catch (error: any) {
       toast.error(error.message);
       throw error;
@@ -83,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: window.location.origin,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -101,9 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('No URL returned from OAuth provider');
       }
       
-      // Open in a new tab instead of same window
-      console.log('Opening auth URL in new tab:', data.url);
-      window.open(data.url, '_blank', 'noopener,noreferrer');
+      // Redirect in same window for better flow
+      window.location.href = data.url;
     } catch (error: any) {
       console.error('Google Sign In Error:', error);
       toast.error(error.message || 'Failed to sign in with Google');
@@ -115,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      navigate('/');
+      navigate('/auth');
       toast.success('Successfully signed out');
     } catch (error: any) {
       toast.error(error.message);
