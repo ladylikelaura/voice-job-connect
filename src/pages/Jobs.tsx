@@ -55,6 +55,7 @@ export default function Jobs() {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [visibleJobs, setVisibleJobs] = useState(10); // Number of jobs to show initially
 
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
@@ -119,6 +120,11 @@ export default function Jobs() {
 
   const handleCategoryClick = (category: string) => {
     setSelectedCategory(selectedCategory === category ? null : category);
+    setVisibleJobs(10); // Reset visible jobs when changing category
+  };
+
+  const loadMore = () => {
+    setVisibleJobs(prev => prev + 10);
   };
 
   const filteredJobs = jobs?.filter(job => {
@@ -134,6 +140,9 @@ export default function Jobs() {
 
     return matchesSearch && matchesCategory;
   }) || [];
+
+  const visibleFilteredJobs = filteredJobs.slice(0, visibleJobs);
+  const hasMoreJobs = filteredJobs.length > visibleJobs;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -179,7 +188,10 @@ export default function Jobs() {
               type="text"
               placeholder="Search jobs..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setVisibleJobs(10); // Reset visible jobs when searching
+              }}
               className="pl-10"
             />
           </div>
@@ -226,49 +238,59 @@ export default function Jobs() {
               <Card className="p-6 text-center">
                 <p className="text-red-500">Error loading jobs. Please try again later.</p>
               </Card>
-            ) : filteredJobs.length === 0 ? (
+            ) : visibleFilteredJobs.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">
                 <p>No jobs found matching your search criteria</p>
               </Card>
             ) : (
-              filteredJobs.map((job) => (
-                <Card key={job.id} className="overflow-hidden">
-                  <div className="p-4 sm:p-6">
-                    <CardTitle className="text-base sm:text-lg mb-1">{job.title}</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm mb-2">
-                      {job.company_name} • {job.job_type || 'Full Time'}
-                      {job.candidate_required_location && ` • ${job.candidate_required_location}`}
-                    </CardDescription>
-                    {job.salary && (
-                      <p className="text-xs sm:text-sm text-primary mb-2">{job.salary}</p>
-                    )}
-                    <p className="text-xs sm:text-sm mb-3 sm:mb-4">
-                      {stripHtmlTags(job.description).slice(0, 200)}...
-                    </p>
-                    <div className="flex justify-end gap-2">
-                      {screenReaderEnabled && (
+              <>
+                {visibleFilteredJobs.map((job) => (
+                  <Card key={job.id} className="overflow-hidden">
+                    <div className="p-4 sm:p-6">
+                      <CardTitle className="text-base sm:text-lg mb-1">{job.title}</CardTitle>
+                      <CardDescription className="text-xs sm:text-sm mb-2">
+                        {job.company_name} • {job.job_type || 'Full Time'}
+                        {job.candidate_required_location && ` • ${job.candidate_required_location}`}
+                      </CardDescription>
+                      {job.salary && (
+                        <p className="text-xs sm:text-sm text-primary mb-2">{job.salary}</p>
+                      )}
+                      <p className="text-xs sm:text-sm mb-3 sm:mb-4">
+                        {stripHtmlTags(job.description).slice(0, 200)}...
+                      </p>
+                      <div className="flex justify-end gap-2">
+                        {screenReaderEnabled && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => readJobDescription(job)}
+                            disabled={isPlaying}
+                            className="text-xs sm:text-sm"
+                          >
+                            {isPlaying ? "Playing..." : "Read Description"}
+                          </Button>
+                        )}
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => readJobDescription(job)}
-                          disabled={isPlaying}
                           className="text-xs sm:text-sm"
+                          onClick={() => window.open(job.url, '_blank')}
                         >
-                          {isPlaying ? "Playing..." : "Read Description"}
+                          View Job Details
                         </Button>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs sm:text-sm"
-                        onClick={() => window.open(job.url, '_blank')}
-                      >
-                        View Job Details
-                      </Button>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))
+                  </Card>
+                ))}
+                {hasMoreJobs && (
+                  <Button 
+                    onClick={loadMore}
+                    className="w-full bg-muted text-muted-foreground hover:bg-muted/80 text-xs sm:text-sm py-5 sm:py-6"
+                  >
+                    Load More Jobs
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
