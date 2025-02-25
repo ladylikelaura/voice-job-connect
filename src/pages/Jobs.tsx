@@ -1,4 +1,3 @@
-
 import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +59,12 @@ export default function Jobs() {
     queryKey: ['jobs'],
     queryFn: fetchJobs,
   });
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
 
   const readJobDescription = async (job: RemotiveJob) => {
     const cleanDescription = stripHtmlTags(job.description);

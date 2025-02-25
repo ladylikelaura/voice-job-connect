@@ -24,7 +24,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active sessions and subscribe to auth changes
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setUser(session.user);
+        navigate('/jobs');
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
@@ -32,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Auth state changed:', _event, session); // Debug log
       if (session?.user) {
         setUser(session.user);
-        navigate('/jobs'); // Changed from /dashboard to /jobs
+        navigate('/jobs'); // Ensure redirect to jobs page
         toast.success('Successfully signed in!');
       } else {
         setUser(null);
@@ -64,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
       if (error) throw error;
-      navigate('/jobs'); // Changed from /dashboard to /jobs
+      navigate('/jobs'); // Ensure redirect to jobs page
       toast.success('Welcome back!');
     } catch (error: any) {
       toast.error(error.message);
