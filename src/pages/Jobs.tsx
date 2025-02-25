@@ -1,15 +1,15 @@
-
 import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react"; // Added useEffect import
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
+import { VoiceApplicationUI } from '@/components/VoiceApplicationUI';
 
 interface RemotiveJob {
   id: number;
@@ -55,7 +55,7 @@ export default function Jobs() {
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [visibleJobs, setVisibleJobs] = useState(10); // Number of jobs to show initially
+  const [visibleJobs, setVisibleJobs] = useState(10);
 
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
@@ -120,7 +120,7 @@ export default function Jobs() {
 
   const handleCategoryClick = (category: string) => {
     setSelectedCategory(selectedCategory === category ? null : category);
-    setVisibleJobs(10); // Reset visible jobs when changing category
+    setVisibleJobs(10);
   };
 
   const loadMore = () => {
@@ -190,7 +190,7 @@ export default function Jobs() {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setVisibleJobs(10); // Reset visible jobs when searching
+                setVisibleJobs(10);
               }}
               className="pl-10"
             />
@@ -226,6 +226,8 @@ export default function Jobs() {
             </p>
           </CardContent>
         </Card>
+
+        <VoiceApplicationUI />
 
         <div>
           <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Available Positions</h2>
