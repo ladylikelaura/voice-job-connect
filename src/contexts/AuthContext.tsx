@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       setLoading(false);
       if (session?.user) {
-        navigate('/dashboard');
+        navigate('/jobs');
       }
     });
 
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       
       if (session?.user) {
-        navigate('/dashboard');
+        navigate('/jobs');
         toast.success('Successfully signed in!');
       }
     });
