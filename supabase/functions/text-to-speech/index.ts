@@ -7,6 +7,11 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const truncateText = (text: string, maxLength = 4096) => {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + "...";
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -24,7 +29,10 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Making request to OpenAI TTS API...');
+    // Prepare the text - truncate if too long and ensure it's a string
+    const processedText = truncateText(String(text).trim());
+    
+    console.log('Making request to OpenAI TTS API with text length:', processedText.length);
     
     // Using OpenAI's TTS API
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
@@ -35,7 +43,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'tts-1',
-        input: text,
+        input: processedText,
         voice: 'alloy',
         response_format: 'mp3',
       }),
@@ -50,8 +58,8 @@ serve(async (req) => {
     console.log('Successfully generated speech, converting to base64...');
 
     // Convert audio buffer to base64
-    const arrayBuffer = await response.arrayBuffer()
-    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+    const arrayBuffer = await response.arrayBuffer();
+    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
     console.log('Successfully converted to base64, sending response...');
 
