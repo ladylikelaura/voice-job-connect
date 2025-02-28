@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Mic, Square, FileText } from 'lucide-react';
@@ -10,6 +10,17 @@ export function VoiceApplicationUI() {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [generatedCV, setGeneratedCV] = useState<string | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioElement) {
+        audioElement.pause();
+        setAudioElement(null);
+      }
+    };
+  }, [audioElement]);
 
   const startVoiceApplication = async () => {
     try {
@@ -25,7 +36,29 @@ export function VoiceApplicationUI() {
       if (error) throw error;
 
       console.log('Voice application started:', data);
-      toast.success("Voice application started. Please speak when ready.");
+      
+      // Play the welcome audio if available
+      if (data.audio) {
+        if (audioElement) {
+          audioElement.pause();
+        }
+        
+        const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
+        setAudioElement(audio);
+        
+        audio.onended = () => {
+          toast.success("Please speak when ready. Click Stop when finished.");
+        };
+        
+        audio.onerror = () => {
+          console.error('Audio playback error');
+          toast.error("Error playing audio. Please try again.");
+        };
+        
+        await audio.play();
+      } else {
+        toast.success("Voice application started. Please speak when ready.");
+      }
 
     } catch (error) {
       console.error('Error starting voice application:', error);
@@ -66,7 +99,7 @@ export function VoiceApplicationUI() {
       <div className="text-center space-y-2">
         <h3 className="text-lg font-semibold">Voice Application</h3>
         <p className="text-sm text-muted-foreground">
-          Apply using voice interface - our AI agent will guide you through the process
+          Apply using voice interface - our AI assistant will guide you through the process
         </p>
       </div>
 
@@ -106,7 +139,6 @@ export function VoiceApplicationUI() {
               variant="outline"
               size="sm"
               onClick={() => {
-                // Download CV logic here
                 const blob = new Blob([generatedCV], { type: 'text/plain' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
