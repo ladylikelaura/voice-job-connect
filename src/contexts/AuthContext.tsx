@@ -22,6 +22,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Handle hash fragments from OAuth redirects
+    const handleHashFragment = async () => {
+      // Check if URL contains access_token
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        try {
+          console.log('Found access token in URL fragment, processing OAuth response');
+          
+          // Let Supabase handle the hash fragment to complete auth
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Error processing OAuth response:', error);
+            toast.error('Authentication failed. Please try again.');
+          } else if (data.session) {
+            console.log('Successfully processed OAuth response');
+            toast.success('Successfully signed in!');
+            navigate('/jobs');
+            
+            // Clear the hash fragment without triggering a reload
+            window.history.replaceState(null, document.title, window.location.pathname);
+          }
+        } catch (err) {
+          console.error('Error handling hash fragment:', err);
+          toast.error('Authentication failed. Please try again.');
+        }
+      }
+    };
+
+    // Call the handler when component mounts
+    handleHashFragment();
+
     // Check active sessions and subscribe to auth changes
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -78,7 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Get the current URL
       const currentOrigin = window.location.origin;
-      const redirectUrl = `${currentOrigin}/auth`;
+      
+      // Use the root URL to prevent 404 errors when redirecting back
+      const redirectUrl = `${currentOrigin}`;
       console.log('Redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -106,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Redirecting to OAuth URL:', data.url);
       
-      // Standard redirect - no iframe handling needed for most cases
+      // Standard redirect
       window.location.href = data.url;
       
     } catch (error: any) {

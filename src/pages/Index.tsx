@@ -1,22 +1,56 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
 const Index = () => {
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
+
+  // Check for auth tokens in URL when the page loads
+  useEffect(() => {
+    const checkForAuthTokens = async () => {
+      // If hash includes access_token, we're in an OAuth flow
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        try {
+          console.log('Found access token in URL hash, processing OAuth response');
+          
+          // Let Supabase handle the token
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Error processing OAuth token:', error);
+            toast.error('Authentication failed. Please try again.');
+          } else if (data.session) {
+            console.log('Successfully authenticated with OAuth provider');
+            toast.success('Successfully signed in!');
+            navigate('/jobs');
+            return;
+          }
+        } catch (err) {
+          console.error('Error handling auth token:', err);
+        }
+      }
+    };
+
+    checkForAuthTokens();
+  }, [navigate]);
+
   const handleGetStarted = () => {
     navigate('/auth');
   };
+
   const toggleVoiceOver = () => {
     setIsVoiceEnabled(!isVoiceEnabled);
     if (!isVoiceEnabled) {
       readWelcomeMessage();
     }
   };
+
   const readWelcomeMessage = async () => {
     const welcomeText = "Welcome to the Job Recruiting App! Learn about our job search process where we make job opportunities accessible for everyone.";
     try {
@@ -48,6 +82,7 @@ const Index = () => {
       toast.error("Failed to convert text to speech");
     }
   };
+
   return <div className="min-h-screen bg-background p-4 flex flex-col items-center animate-fade-in">
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Hero Image */}
@@ -77,4 +112,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
