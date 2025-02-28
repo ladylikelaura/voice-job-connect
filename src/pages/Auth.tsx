@@ -11,14 +11,9 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const { signIn, signUp, signInWithGoogle } = useAuth();
 
-  const handleEmailAuth = () => {
-    // This will open the default Supabase email auth flow
-    const { createClient } = supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      }
-    });
+  const handleEmailAuth = async () => {
+    // This will redirect to the Supabase email auth page
+    window.location.href = `${window.location.origin}/auth/email`;
   };
 
   return (
@@ -27,7 +22,7 @@ const Auth = () => {
       role="main"
       aria-label={isSignUp ? "Sign up page" : "Sign in page"}
     >
-      <Card className="w-full max-w-md p-6 space-y-6">
+      <Card className="w-full max-w-md p-6 space-y-8">
         <h1 
           className="text-2xl font-semibold text-center"
           tabIndex={0}
@@ -36,14 +31,14 @@ const Auth = () => {
           {isSignUp ? 'Create an Account' : 'Welcome Back'}
         </h1>
         
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Button 
-            variant="outline" 
-            className="w-full flex items-center justify-center gap-2"
+            variant="default" 
+            className="w-full flex items-center justify-center gap-3 py-6 text-base font-medium bg-primary hover:bg-primary/90"
             onClick={signInWithGoogle}
             aria-label="Sign in with Google"
           >
-            <svg role="img" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20">
+            <svg role="img" aria-hidden="true" viewBox="0 0 24 24" width="24" height="24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -65,12 +60,12 @@ const Auth = () => {
           </Button>
 
           <Button 
-            variant="outline" 
-            className="w-full flex items-center justify-center gap-2"
-            onClick={() => window.location.href = `${window.location.origin}/auth/email`}
+            variant="secondary" 
+            className="w-full flex items-center justify-center gap-3 py-6 text-base font-medium bg-secondary hover:bg-secondary/80 text-secondary-foreground"
+            onClick={handleEmailAuth}
             aria-label="Sign in with Email"
           >
-            <Mail className="w-5 h-5" />
+            <Mail className="w-6 h-6" />
             Continue with Email
           </Button>
         </div>
@@ -79,7 +74,7 @@ const Auth = () => {
           <Button
             variant="link"
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm"
+            className="text-sm font-medium"
             aria-label={isSignUp ? "Switch to sign in" : "Switch to sign up"}
           >
             {isSignUp
