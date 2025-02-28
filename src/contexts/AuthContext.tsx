@@ -75,10 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log('Starting Google sign in...'); // Debug log
+      
+      // Get the current URL
+      const currentOrigin = window.location.origin;
+      const redirectUrl = `${currentOrigin}/auth`;
+      console.log('Redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -88,22 +94,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('Supabase OAuth error:', error);
+        toast.error(`OAuth Error: ${error.message}`);
         throw error;
       }
       
       if (!data.url) {
         console.error('No OAuth URL returned');
+        toast.error('Authentication failed: No URL returned from provider');
         throw new Error('No URL returned from OAuth provider');
       }
       
-      // Handle iframe-specific navigation
-      if (window.parent !== window) {
-        // If we're in an iframe, send a message to the parent
-        window.parent.postMessage({ type: 'navigate', url: data.url }, '*');
-      } else {
-        // If we're not in an iframe, redirect normally
-        window.location.href = data.url;
-      }
+      console.log('Redirecting to OAuth URL:', data.url);
+      
+      // Standard redirect - no iframe handling needed for most cases
+      window.location.href = data.url;
+      
     } catch (error: any) {
       console.error('Google Sign In Error:', error);
       toast.error(error.message || 'Failed to sign in with Google');
