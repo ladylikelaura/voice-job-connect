@@ -48,12 +48,43 @@ const Index = () => {
     setIsVoiceEnabled(!isVoiceEnabled);
     if (!isVoiceEnabled) {
       readWelcomeMessage();
+    } else if (audioElement) {
+      // Stop playing if turning off
+      audioElement.pause();
+      setIsPlaying(false);
+      window.speechSynthesis.cancel(); // Cancel any ongoing speech synthesis
     }
+  };
+
+  // Use browser's built-in speech synthesis as fallback
+  const useBrowserSpeechSynthesis = (text: string) => {
+    // Check if browser supports speech synthesis
+    if ('speechSynthesis' in window) {
+      setIsPlaying(true);
+      toast.info("Using browser's built-in voice capabilities");
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = () => {
+        setIsPlaying(false);
+      };
+      utterance.onerror = () => {
+        setIsPlaying(false);
+        toast.error("Browser speech synthesis failed");
+      };
+      
+      // Clear any previous utterances
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+      
+      return true;
+    }
+    return false;
   };
 
   const readWelcomeMessage = async () => {
     const welcomeText = "Welcome to the Job Recruiting App! Learn about our job search process where we make job opportunities accessible for everyone.";
     try {
+      setIsPlaying(true);
       const {
         data,
         error
@@ -62,8 +93,13 @@ const Index = () => {
           text: welcomeText
         }
       });
-      if (error) throw error;
-      if (data.audio) {
+      
+      if (error) {
+        console.error('Supabase TTS Error:', error);
+        throw error;
+      }
+      
+      if (data && data.audio) {
         if (audioElement) {
           audioElement.pause();
         }
@@ -72,14 +108,24 @@ const Index = () => {
         audio.onplay = () => setIsPlaying(true);
         audio.onended = () => setIsPlaying(false);
         audio.onerror = () => {
+          console.error('Audio playback error');
           setIsPlaying(false);
-          toast.error("Error playing audio");
+          // Try browser fallback if audio playback fails
+          if (!useBrowserSpeechSynthesis(welcomeText)) {
+            toast.error("Voice playback is not supported in your browser");
+          }
         };
         await audio.play();
+      } else {
+        throw new Error("No audio data received");
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error("Failed to convert text to speech");
+      console.error('TTS Error:', error);
+      // Try browser fallback if Supabase function fails
+      if (!useBrowserSpeechSynthesis(welcomeText)) {
+        toast.error("Voice over is not available at the moment");
+        setIsPlaying(false);
+      }
     }
   };
 
@@ -102,8 +148,13 @@ const Index = () => {
             Get Started
           </Button>
           
-          <Button variant="secondary" onClick={toggleVoiceOver} aria-pressed={isVoiceEnabled} className="w-full text-base flex flex-col gap-1 items-center py-[32px]">
-            {isPlaying ? "Playing..." : "Enable VoiceOver"}
+          <Button 
+            variant="secondary" 
+            onClick={toggleVoiceOver} 
+            aria-pressed={isVoiceEnabled}
+            className={`w-full text-base flex flex-col gap-1 items-center py-[32px] ${isVoiceEnabled ? 'bg-blue-100' : ''}`}
+          >
+            {isPlaying ? "Playing..." : isVoiceEnabled ? "Disable VoiceOver" : "Enable VoiceOver"}
             <span className="text-sm text-muted-foreground">
               Screen reader assistance available
             </span>
