@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signInWithGoogle } = useAuth();
 
   const handleEmailAuth = async () => {
     // This will redirect to the Supabase email auth page
