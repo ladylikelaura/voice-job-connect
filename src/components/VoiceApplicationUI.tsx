@@ -27,6 +27,7 @@ export function VoiceApplicationUI() {
       setIsRecording(true);
       toast.info("Starting voice application...");
 
+      // Use ElevenLabs voice API through Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('voice-application', {
         body: {
           action: 'start'

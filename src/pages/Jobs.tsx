@@ -53,7 +53,6 @@ export default function Jobs() {
   const { signOut, user } = useAuth();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [visibleJobs, setVisibleJobs] = useState(10);
@@ -69,16 +68,23 @@ export default function Jobs() {
     }
   }, [user, navigate]);
 
-  // Force using browser's built-in speech synthesis (for testing or when Supabase function fails)
-  const useBrowserSpeechSynthesis = (text: string) => {
-    console.log("Attempting to use browser's speech synthesis");
-    // Check if browser supports speech synthesis
-    if ('speechSynthesis' in window) {
-      setIsPlaying(true);
-      toast.info("Using browser's built-in voice capabilities");
+  // Use browser's built-in speech synthesis only
+  const readJobDescription = (job: RemotiveJob) => {
+    try {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
       
-      try {
-        const utterance = new SpeechSynthesisUtterance(text);
+      const cleanDescription = stripHtmlTags(job.description);
+      const jobText = `${job.title}. Position at ${job.company_name}. ${job.job_type} role${job.candidate_required_location ? `, ${job.candidate_required_location}` : ''}. ${job.salary ? `Salary: ${job.salary}.` : ''} ${cleanDescription.slice(0, 200)}...`;
+      
+      console.log("Reading job description using browser speech synthesis:", job.title);
+      
+      // Check if browser supports speech synthesis
+      if ('speechSynthesis' in window) {
+        setIsPlaying(true);
+        toast.info("Reading job description...");
+        
+        const utterance = new SpeechSynthesisUtterance(jobText);
         
         utterance.onend = () => {
           console.log("Browser speech synthesis ended");
@@ -88,88 +94,12 @@ export default function Jobs() {
         utterance.onerror = (event) => {
           console.error("Browser speech synthesis error:", event);
           setIsPlaying(false);
-          toast.error("Browser speech synthesis failed");
+          toast.error("Failed to read job description");
         };
         
-        // Clear any previous utterances
-        window.speechSynthesis.cancel();
-        console.log("Starting browser speech synthesis");
         window.speechSynthesis.speak(utterance);
-        
-        return true;
-      } catch (error) {
-        console.error("Error setting up browser speech synthesis:", error);
-        setIsPlaying(false);
-        return false;
-      }
-    }
-    console.log("Browser does not support speech synthesis");
-    return false;
-  };
-
-  const readJobDescription = async (job: RemotiveJob) => {
-    try {
-      // Stop any current playback
-      if (audioElement) {
-        audioElement.pause();
-        setAudioElement(null);
-      }
-      window.speechSynthesis.cancel();
-      
-      const cleanDescription = stripHtmlTags(job.description);
-      const jobText = `${job.title}. Position at ${job.company_name}. ${job.job_type} role${job.candidate_required_location ? `, ${job.candidate_required_location}` : ''}. ${job.salary ? `Salary: ${job.salary}.` : ''} ${cleanDescription.slice(0, 200)}...`;
-      
-      console.log("Reading job description:", job.title);
-      setIsPlaying(true);
-      
-      // First try using Supabase function
-      try {
-        console.log("Trying Supabase TTS function");
-        const { data, error } = await supabase.functions.invoke('text-to-speech', {
-          body: { text: jobText }
-        });
-
-        if (error) {
-          console.error('Supabase TTS Error:', error);
-          throw new Error(`Supabase TTS Error: ${error.message}`);
-        }
-
-        if (!data || !data.audio) {
-          console.error('No audio data received from Supabase');
-          throw new Error("No audio data received from Supabase");
-        }
-
-        console.log("Audio data received from Supabase, playing...");
-        const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
-        setAudioElement(audio);
-        
-        audio.onplay = () => {
-          console.log("Audio started playing");
-          setIsPlaying(true);
-        };
-        
-        audio.onended = () => {
-          console.log("Audio finished playing");
-          setIsPlaying(false);
-        };
-        
-        audio.onerror = (e) => {
-          console.error('Audio playback error:', e);
-          setIsPlaying(false);
-          throw new Error("Audio playback failed");
-        };
-        
-        await audio.play();
-        return; // Success, exit function
-      } catch (supabaseError) {
-        console.error("Failed to use Supabase TTS:", supabaseError);
-        toast.error("Supabase TTS failed, using browser fallback");
-        
-        // Fallback to browser speech synthesis
-        if (!useBrowserSpeechSynthesis(jobText)) {
-          toast.error("Voice playback is not available on your browser");
-          setIsPlaying(false);
-        }
+      } else {
+        toast.error("Your browser does not support text-to-speech");
       }
     } catch (error) {
       console.error('TTS Error:', error);
@@ -183,10 +113,6 @@ export default function Jobs() {
     if (!screenReaderEnabled) {
       toast.success("Screen reader enabled");
     } else {
-      if (audioElement) {
-        audioElement.pause();
-        setAudioElement(null);
-      }
       setIsPlaying(false);
       window.speechSynthesis.cancel(); // Cancel any ongoing speech synthesis
       toast.success("Screen reader disabled");
