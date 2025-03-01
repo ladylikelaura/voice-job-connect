@@ -20,6 +20,7 @@ export const useVoiceConversation = () => {
   const conversationRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const cvGenerationAttemptedRef = useRef<boolean>(false);
 
   // Initialize AudioContext
   useEffect(() => {
@@ -76,20 +77,31 @@ export const useVoiceConversation = () => {
   // Generate a CV based on the conversation
   const generateCV = () => {
     // Prevent duplicate generation
-    if (generatedCV) {
-      console.log('CV already generated, skipping');
+    if (generatedCV || cvGenerationAttemptedRef.current) {
+      console.log('CV already generated or attempted, skipping');
       return;
     }
     
+    if (interviewTranscript.length === 0) {
+      console.log('No transcript data available, cannot generate CV');
+      return;
+    }
+    
+    cvGenerationAttemptedRef.current = true;
     console.log('Generating CV based on transcript');
     setIsProcessing(true);
     
-    setTimeout(() => {
+    try {
+      console.log('Transcript data for CV generation:', interviewTranscript);
       const sampleCV = generateCVFromTranscript(interviewTranscript);
       setGeneratedCV(sampleCV);
-      setIsProcessing(false);
       toast.success("CV generated based on your responses!");
-    }, 2000);
+    } catch (error) {
+      console.error('Error generating CV:', error);
+      toast.error("Error generating CV. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Toggle mute
@@ -111,6 +123,10 @@ export const useVoiceConversation = () => {
   // Start conversation with ElevenLabs
   const startConversation = async () => {
     try {
+      // Reset CV generation state
+      setGeneratedCV(null);
+      cvGenerationAttemptedRef.current = false;
+      
       // Resume AudioContext if it was suspended (required by browsers)
       if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
@@ -141,7 +157,7 @@ export const useVoiceConversation = () => {
           setIsProcessing(false);
           
           // Always generate CV when session ends if we have transcript data
-          if (interviewTranscript.length > 0 && !generatedCV) {
+          if (interviewTranscript.length > 0 && !generatedCV && !cvGenerationAttemptedRef.current) {
             console.log('Automatically generating CV after disconnect');
             generateCV();
           }
@@ -152,7 +168,7 @@ export const useVoiceConversation = () => {
           toast.error(`Error: ${error}`);
           
           // Attempt to generate CV even on error if we have transcript data
-          if (interviewTranscript.length > 0 && !generatedCV) {
+          if (interviewTranscript.length > 0 && !generatedCV && !cvGenerationAttemptedRef.current) {
             console.log('Generating CV despite error');
             generateCV();
           }
@@ -180,7 +196,7 @@ export const useVoiceConversation = () => {
               message.message.toLowerCase().includes('conclude')
             )
           ) {
-            if (!generatedCV) {
+            if (!generatedCV && !cvGenerationAttemptedRef.current) {
               console.log('Agent mentioned CV generation or session conclusion');
               generateCV();
             }
@@ -217,12 +233,13 @@ export const useVoiceConversation = () => {
     
     setIsCallActive(false);
     setIsProcessing(false);
-    toast.success("Interview completed. Your CV has been generated.");
     
-    // Always generate CV after conversation ends
-    if (!generatedCV && interviewTranscript.length > 0) {
+    // Explicitly generate CV after conversation ends if not already done
+    if (!generatedCV && !cvGenerationAttemptedRef.current && interviewTranscript.length > 0) {
       console.log('Explicitly generating CV after endConversation');
-      generateCV();
+      setTimeout(() => generateCV(), 500); // Short delay to ensure UI updates first
+    } else {
+      toast.success("Interview completed.");
     }
   };
 
@@ -231,6 +248,7 @@ export const useVoiceConversation = () => {
     setGeneratedCV(null);
     setCallDuration(0);
     setInterviewTranscript([]);
+    cvGenerationAttemptedRef.current = false;
     toast.info("Application reset. Ready to start again.");
   };
 

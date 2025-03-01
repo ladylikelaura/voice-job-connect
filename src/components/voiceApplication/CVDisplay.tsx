@@ -43,7 +43,7 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({ generatedCV }) => {
   };
   
   return (
-    <div className="mt-6 p-6 bg-muted/20 backdrop-blur-sm rounded-md border border-muted-foreground/10 shadow-md">
+    <div className="mt-6 p-6 bg-muted/20 backdrop-blur-sm rounded-md border border-muted-foreground/10 shadow-md" id="cv-container">
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-lg font-semibold flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary" />
