@@ -25,10 +25,14 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   console.log('Found', agentLines.length, 'agent messages for CV generation');
 
   // Extract personal information
-  const { name, email, phone, location } = extractPersonalInfo(agentText, fullTranscript);
+  const personalInfo = extractPersonalInfo(agentText, fullTranscript);
+  const { name, email, phone } = personalInfo;
+  const location = personalInfo.location || '';
   
   // Extract professional information
-  const { jobTitle, yearsOfExperience, company, responsibilities } = extractProfessionalInfo(agentText, fullTranscript);
+  const professionalInfo = extractProfessionalInfo(agentText, fullTranscript);
+  const { jobTitle, yearsOfExperience, company } = professionalInfo;
+  const responsibilities = professionalInfo.responsibilities || [];
   
   // Extract skills
   const skills = extractSkills(agentText);
@@ -80,7 +84,8 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   // Generate work experience section
   let experienceSection = `## WORK EXPERIENCE\n`;
   if (company) {
-    const duration = `Jan ${new Date().getFullYear() - (yearsOfExperience || 1)} - Present`;
+    const yearsExp = yearsOfExperience ? Number(yearsOfExperience) : 1;
+    const duration = `Jan ${new Date().getFullYear() - yearsExp} - Present`;
     experienceSection += `${jobTitle || 'Professional'} - ${company} | ${duration}\n\n`;
     experienceSection += `Effectively managed responsibilities and delivered excellent results in a professional environment.\n\n`;
     

@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FileText, Download, FileType, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface CVDisplayProps {
   /**
@@ -23,6 +24,15 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({
   downloadWordDocument, 
   downloadPdfDocument 
 }) => {
+  const pdfRef = useRef<HTMLIFrameElement>(null);
+  
+  // Check for PDF rendering support
+  useEffect(() => {
+    if (downloadPdfDocument && !window.navigator.mimeTypes['application/pdf']) {
+      console.warn('PDF rendering not supported in this browser');
+    }
+  }, [downloadPdfDocument]);
+
   if (!generatedCV) return null;
   
   // Convert markdown headers to HTML with better formatting
@@ -70,6 +80,17 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({
     URL.revokeObjectURL(url);
   };
   
+  const handlePdfDownload = () => {
+    if (downloadPdfDocument) {
+      try {
+        downloadPdfDocument();
+      } catch (error) {
+        console.error('Error downloading PDF:', error);
+        toast.error('Could not generate PDF. Try using the Word or Markdown format instead.');
+      }
+    }
+  };
+  
   return (
     <div className="mt-6 p-6 bg-muted/20 backdrop-blur-sm rounded-md border border-muted-foreground/10 shadow-md" id="cv-container">
       <div className="flex items-center justify-between mb-4">
@@ -95,7 +116,7 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({
               variant="outline" 
               size="sm" 
               className="flex gap-1 items-center"
-              onClick={downloadPdfDocument}
+              onClick={handlePdfDownload}
             >
               <File className="w-4 h-4" />
               PDF

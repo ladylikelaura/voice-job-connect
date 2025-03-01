@@ -117,9 +117,7 @@ export const generateWordDocument = (cvData: any): Blob => {
  * @returns A Blob containing the PDF
  */
 export const generatePdfDocument = (cvData: any): Blob => {
-  // For PDF we need a proper MIME type and a different approach to structure
-  // Using HTML with PDF-specific styling
-  
+  // Create HTML content for PDF rendering
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -172,6 +170,7 @@ export const generatePdfDocument = (cvData: any): Blob => {
       <div class="contact-info">
         ${cvData.personalInfo?.email ? `Email: ${cvData.personalInfo.email}<br>` : ''}
         ${cvData.personalInfo?.phone ? `Phone: ${cvData.personalInfo.phone}<br>` : ''}
+        ${cvData.personalInfo?.location ? `Location: ${cvData.personalInfo.location}<br>` : ''}
       </div>
       
       <div class="section">
@@ -243,6 +242,6 @@ export const generatePdfDocument = (cvData: any): Blob => {
     </html>
   `;
   
-  // Use proper PDF MIME type
+  // Use application/pdf MIME type for proper PDF rendering
   return new Blob([htmlContent], { type: 'application/pdf' });
 };
