@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -121,7 +122,6 @@ export function VoiceApplicationUI() {
           console.log('Status changed:', status);
         }
       });
-      
     } catch (error) {
       console.error('Failed to start conversation:', error);
       setIsCallActive(false);
