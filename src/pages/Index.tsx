@@ -82,7 +82,7 @@ const Index = () => {
   };
 
   const readWelcomeMessage = async () => {
-    const welcomeText = "Welcome to the Job Recruiting App! Learn about our job search process where we make job opportunities accessible for everyone.";
+    const welcomeText = "Welcome to Jobbify! Learn about our job search process where we make job opportunities accessible for everyone.";
     try {
       setIsPlaying(true);
       const {
@@ -138,7 +138,7 @@ const Index = () => {
 
         {/* Welcome Text */}
         <div className="text-center space-y-4 px-4">
-          <h1 className="text-2xl font-semibold text-foreground">Welcome to the Jobbify!</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Welcome to Jobbify!</h1>
           <p className="text-muted-foreground">Learn about our job search process where we make job opportunities accessible for everyone.</p>
         </div>
 
