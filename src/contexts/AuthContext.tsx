@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             // Use timeout to ensure state is updated before navigation
             setTimeout(() => {
-              navigate('/dashboard'); // Changed from /jobs to /dashboard for consistency
+              navigate('/jobs');
             }, 100);
           }
         }
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           // Don't use window.location for page navigation, use React Router instead
           if (window.location.pathname === '/auth') {
-            navigate('/dashboard'); // Changed from /jobs to /dashboard
+            navigate('/jobs');
           }
         }
       } catch (error) {
@@ -83,8 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (_event === 'SIGNED_IN' && session) {
-        // Ensure we navigate to the dashboard page on sign in
-        navigate('/dashboard'); // Changed from /jobs to /dashboard
+        // Ensure we navigate to the jobs page on sign in
+        navigate('/jobs');
         toast.success('Successfully signed in!');
       } else if (_event === 'SIGNED_OUT') {
         // Ensure we navigate to the auth page on sign out
