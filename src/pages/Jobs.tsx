@@ -1,11 +1,10 @@
-
 import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -56,6 +55,8 @@ export default function Jobs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [visibleJobs, setVisibleJobs] = useState(10);
+  const [isVoiceApplicationActive, setIsVoiceApplicationActive] = useState(false);
+  const voiceApplicationRef = useRef<HTMLDivElement>(null);
 
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
@@ -68,10 +69,30 @@ export default function Jobs() {
     }
   }, [user, navigate]);
 
-  // Use browser's built-in speech synthesis only
+  useEffect(() => {
+    const handleVoiceApplicationStart = () => {
+      setIsVoiceApplicationActive(true);
+      
+      if (voiceApplicationRef.current) {
+        voiceApplicationRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    const handleVoiceApplicationEnd = () => {
+      setIsVoiceApplicationActive(false);
+    };
+
+    window.addEventListener('voiceApplicationStart', handleVoiceApplicationStart);
+    window.addEventListener('voiceApplicationEnd', handleVoiceApplicationEnd);
+
+    return () => {
+      window.removeEventListener('voiceApplicationStart', handleVoiceApplicationStart);
+      window.removeEventListener('voiceApplicationEnd', handleVoiceApplicationEnd);
+    };
+  }, []);
+
   const readJobDescription = (job: RemotiveJob) => {
     try {
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       
       const cleanDescription = stripHtmlTags(job.description);
@@ -79,7 +100,6 @@ export default function Jobs() {
       
       console.log("Reading job description using browser speech synthesis:", job.title);
       
-      // Check if browser supports speech synthesis
       if ('speechSynthesis' in window) {
         setIsPlaying(true);
         toast.info("Reading job description...");
@@ -114,7 +134,7 @@ export default function Jobs() {
       toast.success("Screen reader enabled");
     } else {
       setIsPlaying(false);
-      window.speechSynthesis.cancel(); // Cancel any ongoing speech synthesis
+      window.speechSynthesis.cancel();
       toast.success("Screen reader disabled");
     }
   };
@@ -147,7 +167,7 @@ export default function Jobs() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <nav className="border-b px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="border-b px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -179,7 +199,12 @@ export default function Jobs() {
         </div>
       </nav>
 
-      <div className="flex-1 container px-4 sm:px-6 py-4 sm:py-6 mx-auto space-y-6 sm:space-y-8 animate-fade-in max-w-[100%] sm:max-w-xl lg:max-w-2xl">
+      <div 
+        className={cn(
+          "flex-1 container px-4 sm:px-6 py-4 sm:py-6 mx-auto space-y-6 sm:space-y-8 animate-fade-in max-w-[100%] sm:max-w-xl lg:max-w-2xl",
+          isVoiceApplicationActive && "overflow-hidden h-screen"
+        )}
+      >
         <h1 className="text-xl sm:text-2xl font-semibold">Remote Job Listings</h1>
 
         <div className="space-y-4">
@@ -228,7 +253,9 @@ export default function Jobs() {
           </CardContent>
         </Card>
 
-        <VoiceApplicationUI />
+        <div ref={voiceApplicationRef}>
+          <VoiceApplicationUI />
+        </div>
 
         <div>
           <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Available Positions</h2>
@@ -306,7 +333,7 @@ export default function Jobs() {
         </Button>
       </div>
 
-      <nav className="border-t px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="border-t px-4 sm:px-6 py-3 sm:py-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky bottom-0 z-10">
         <div className="flex justify-between max-w-md mx-auto">
           <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="flex flex-col items-center gap-1 h-auto py-2 text-primary">
             <Briefcase className="w-5 h-5" />

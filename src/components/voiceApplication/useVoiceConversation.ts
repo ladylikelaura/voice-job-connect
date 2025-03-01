@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Conversation } from '@11labs/client';
@@ -21,6 +20,11 @@ export const useVoiceConversation = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const cvGenerationAttemptedRef = useRef<boolean>(false);
+
+  // Dispatch custom events for controlling page behavior
+  const dispatchVoiceApplicationEvent = (eventName: string) => {
+    window.dispatchEvent(new CustomEvent(eventName));
+  };
 
   // Initialize AudioContext
   useEffect(() => {
@@ -139,6 +143,10 @@ export const useVoiceConversation = () => {
       setIsCallActive(true);
       setIsProcessing(true);
       setInterviewTranscript([]);
+      
+      // Dispatch event to notify that voice application has started
+      dispatchVoiceApplicationEvent('voiceApplicationStart');
+      
       toast.info("Connecting to the interview agent...");
       
       console.log('Starting conversation with agent ID:', ELEVENLABS_AGENT_ID);
@@ -156,6 +164,9 @@ export const useVoiceConversation = () => {
           setIsCallActive(false);
           setIsProcessing(false);
           
+          // Dispatch event to notify that voice application has ended
+          dispatchVoiceApplicationEvent('voiceApplicationEnd');
+          
           // Always generate CV when session ends if we have transcript data
           if (interviewTranscript.length > 0 && !generatedCV && !cvGenerationAttemptedRef.current) {
             console.log('Automatically generating CV after disconnect');
@@ -166,6 +177,9 @@ export const useVoiceConversation = () => {
           console.error('Error:', error);
           setIsProcessing(false);
           toast.error(`Error: ${error}`);
+          
+          // Dispatch event to notify that voice application has ended (on error)
+          dispatchVoiceApplicationEvent('voiceApplicationEnd');
           
           // Attempt to generate CV even on error if we have transcript data
           if (interviewTranscript.length > 0 && !generatedCV && !cvGenerationAttemptedRef.current) {
@@ -213,6 +227,10 @@ export const useVoiceConversation = () => {
       console.error('Failed to start conversation:', error);
       setIsCallActive(false);
       setIsProcessing(false);
+      
+      // Dispatch event to notify that voice application has ended (on error)
+      dispatchVoiceApplicationEvent('voiceApplicationEnd');
+      
       toast.error("Failed to access microphone. Please ensure microphone permissions are granted.");
     }
   };
@@ -233,6 +251,9 @@ export const useVoiceConversation = () => {
     
     setIsCallActive(false);
     setIsProcessing(false);
+    
+    // Dispatch event to notify that voice application has ended
+    dispatchVoiceApplicationEvent('voiceApplicationEnd');
     
     // Explicitly generate CV after conversation ends if not already done
     if (!generatedCV && !cvGenerationAttemptedRef.current && interviewTranscript.length > 0) {
