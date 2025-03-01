@@ -81,9 +81,9 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   }
   
   // Skills - extract from agent's summary of skills
-  const skillsSection = agentText.match(/(?:skills include|skills are|skilled in|proficient in|expertise in|experienced with|knowledge of|familiar with|competent in)(.*?)(?:education|experience|background|work history|projects|.\s+[A-Z])/is);
-  if (skillsSection && skillsSection[1]) {
-    const skillsText = skillsSection[1];
+  const skillsMatches = agentText.match(/(?:skills include|skills are|skilled in|proficient in|expertise in|experienced with|knowledge of|familiar with|competent in)(.*?)(?:education|experience|background|work history|projects|.\s+[A-Z])/is);
+  if (skillsMatches && skillsMatches[1]) {
+    const skillsText = skillsMatches[1];
     // Look for comma or 'and' separated skills
     const potentialSkills = skillsText.split(/(?:,|\sand\s|;|\n|\r|\s+\/\s+)/).map(s => s.trim());
     skills = potentialSkills.filter(s => s.length > 0 && s.length < 25);
