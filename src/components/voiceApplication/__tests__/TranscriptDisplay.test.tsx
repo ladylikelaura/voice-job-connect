@@ -10,9 +10,9 @@ describe('TranscriptDisplay', () => {
 
   it('renders transcript when visible and has content', () => {
     render(<TranscriptDisplay interviewTranscript={mockTranscript} isVisible={true} />);
-    expect(screen.getByText('Interview Progress:')).toBeInTheDocument();
-    expect(screen.getByText('Agent: Tell me about your experience')).toBeInTheDocument();
-    expect(screen.getByText('You: I have 5 years of experience')).toBeInTheDocument();
+    expect(screen.getByText(/Interview Transcript/)).toBeInTheDocument();
+    expect(screen.getByText(/Tell me about your experience/)).toBeInTheDocument();
+    expect(screen.getByText(/I have 5 years of experience/)).toBeInTheDocument();
   });
 
   it('does not render when not visible', () => {

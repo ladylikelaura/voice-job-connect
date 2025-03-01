@@ -19,18 +19,21 @@ export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({
   isVisible 
 }) => {
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const transcriptContainerRef = useRef<HTMLDivElement>(null);
   
-  // Auto-scroll to the bottom of the transcript
+  // Auto-scroll to the bottom of the transcript container instead of the entire page
   useEffect(() => {
-    if (transcriptEndRef.current) {
-      transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (transcriptEndRef.current && transcriptContainerRef.current) {
+      // Only scroll the container, not the whole page
+      transcriptContainerRef.current.scrollTop = transcriptContainerRef.current.scrollHeight;
     }
   }, [interviewTranscript]);
   
   if (!isVisible || interviewTranscript.length === 0) return null;
   
   return (
-    <div className="mt-4 p-4 bg-gradient-to-br from-muted/60 to-muted/30 backdrop-blur-sm rounded-md max-h-60 overflow-y-auto border border-muted-foreground/10 shadow-inner">
+    <div className="mt-4 p-4 bg-gradient-to-br from-muted/60 to-muted/30 backdrop-blur-sm rounded-md max-h-60 overflow-y-auto border border-muted-foreground/10 shadow-inner"
+         ref={transcriptContainerRef}>
       <div className="flex items-center justify-between mb-3">
         <h4 className="text-sm font-medium flex items-center gap-2">
           <Mic className="h-4 w-4 text-primary" />
