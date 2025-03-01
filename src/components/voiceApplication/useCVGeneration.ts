@@ -291,8 +291,9 @@ export const useCVGeneration = () => {
       .map(item => {
         const lines = item.split('\n');
         const firstLine = lines[0] || '';
-        const role = firstLine.split(' at ')[0]?.trim() || '';
-        const company = firstLine.split(' at ')[1]?.trim() || '';
+        const roleParts = firstLine.split(' at ');
+        const role = roleParts[0]?.trim() || '';
+        const company = roleParts[1]?.trim() || '';
         const duration = lines[1]?.replace('*', '').replace('*', '').trim() || '';
         
         return { role, company, duration, responsibilities: [] };
@@ -315,7 +316,7 @@ export const useCVGeneration = () => {
     return {
       personalInfo: { name, email, phone },
       professionalSummary: summary,
-      jobTitle: role || 'Professional',
+      jobTitle: 'Professional',
       skills,
       experience: experienceItems,
       education,

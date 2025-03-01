@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Download, FileWord, FilePdf } from 'lucide-react';
+import { FileText, Download, FileType, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CVDisplayProps {
@@ -69,7 +69,7 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({
               className="flex gap-1 items-center"
               onClick={downloadWordDocument}
             >
-              <FileWord className="w-4 h-4" />
+              <FileType className="w-4 h-4" />
               Word
             </Button>
           )}
@@ -81,7 +81,7 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({
               className="flex gap-1 items-center"
               onClick={downloadPdfDocument}
             >
-              <FilePdf className="w-4 h-4" />
+              <File className="w-4 h-4" />
               PDF
             </Button>
           )}
