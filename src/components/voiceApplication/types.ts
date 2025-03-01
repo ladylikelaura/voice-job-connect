@@ -13,3 +13,30 @@ export interface VoiceConversationHook {
   downloadWordDocument?: () => void;
   downloadPdfDocument?: () => void;
 }
+
+export interface ProcessedCV {
+  personalInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    location?: string;
+    linkedIn?: string;
+    website?: string;
+  };
+  professionalSummary: string;
+  jobTitle: string;
+  skills: string[];
+  experience: Array<{
+    company: string;
+    role: string;
+    duration: string;
+    responsibilities: string[];
+  }>;
+  education: Array<{
+    degree: string;
+    institution: string;
+    year: string;
+  }>;
+  certifications: string[];
+  languages: string[];
+}

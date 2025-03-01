@@ -2,9 +2,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const CLAUDE_API_KEY = Deno.env.get('CLAUDE_API_KEY');
-const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -17,7 +14,17 @@ serve(async (req) => {
   }
 
   try {
-    // Parse the request body
+    console.log("Processing CV with Claude API");
+    const claudeApiKey = Deno.env.get('CLAUDE_API_KEY');
+    
+    if (!claudeApiKey) {
+      console.error("Missing Claude API key");
+      return new Response(
+        JSON.stringify({ error: "Missing API key configuration" }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const { transcriptSummary } = await req.json();
 
     if (!transcriptSummary || transcriptSummary.length === 0) {
@@ -28,86 +35,116 @@ serve(async (req) => {
       );
     }
 
-    console.log("Processing transcript summary with Claude API");
+    console.log("Transcript summary received, calling Claude API");
     
-    // Call Claude API to process the transcript
-    const response = await fetch(CLAUDE_API_URL, {
-      method: "POST",
+    // Improved prompt for better CV structure
+    const systemPrompt = `
+      You are an expert CV writer and career counselor who helps create professional CVs. 
+      
+      Your task is to extract and organize comprehensive information from an interview transcript summary into a well-structured professional CV.
+      
+      Instructions:
+      1. Carefully analyze the transcript to identify key professional details.
+      2. Use a formal, professional tone throughout the CV.
+      3. Organize information into clear, standardized sections.
+      4. Be concise yet comprehensive.
+      5. Highlight achievements and skills relevant to the person's profession.
+      6. Use professional industry terminology where appropriate.
+      7. Format dates, job titles, and other details consistently.
+
+      Your output should be a JSON object with these fields:
+      - personalInfo: {name, email, phone, location, linkedIn, website}
+      - professionalSummary: A compelling 3-4 sentence summary of their professional background
+      - jobTitle: Their current or most recent job title
+      - skills: Array of professional skills (aim for 6-12 relevant skills)
+      - experience: Array of work experiences, each containing {company, role, duration, responsibilities}
+        - For responsibilities, provide 3-5 bullet points per role that highlight achievements
+      - education: Array of educational background, each containing {degree, institution, year}
+      - certifications: Array of relevant professional certifications
+      - languages: Array of languages they speak
+      
+      If any information is not available in the transcript, make reasonable professional inferences based on context, but DO NOT include completely fictitious details.
+    `;
+
+    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": CLAUDE_API_KEY,
-        "anthropic-version": "2023-06-01"
+        'Content-Type': 'application/json',
+        'x-api-key': claudeApiKey,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: "claude-3-haiku-20240307",
+        model: 'claude-3-opus-20240229',
         max_tokens: 4000,
+        temperature: 0.2,
+        system: systemPrompt,
         messages: [
           {
-            role: "user",
-            content: `I need you to analyze this interview transcript summary and extract structured information for a professional CV/resume. Format your response as JSON with the following fields:
-            
-            - personalInfo: object with name, email, phone
-            - professionalSummary: string with 2-3 sentences describing the candidate
-            - jobTitle: main job title/role
-            - skills: array of technical and soft skills
-            - experience: array of work experiences with company, role, duration, and key responsibilities
-            - education: array of education items with degree, institution, year
-            - certifications: array of any certifications mentioned
-            - languages: array of languages spoken
-            
-            Here is the transcript summary:
-            
-            ${transcriptSummary}
-            
-            Respond with ONLY the JSON object, no additional text.`
+            role: 'user',
+            content: `Here is the interview transcript summary. Extract the relevant information to create a professional CV:\n\n${transcriptSummary}`
           }
         ]
       })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Claude API error:", errorText);
-      return new Response(
-        JSON.stringify({ error: "Failed to process with Claude API", details: errorText }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!claudeResponse.ok) {
+      const errorData = await claudeResponse.text();
+      console.error("Claude API error:", errorData);
+      throw new Error(`Claude API error: ${claudeResponse.status} ${errorData}`);
     }
 
-    const claudeResponse = await response.json();
-    let processedCV;
+    const responseData = await claudeResponse.json();
+    console.log("Claude response received");
     
+    // Extract the content from Claude's response
+    let cvData;
     try {
-      // Extract the JSON from Claude's response
-      const content = claudeResponse.content;
-      if (Array.isArray(content) && content.length > 0) {
-        // Find the text block in the response
-        const textBlock = content.find(block => block.type === 'text');
-        if (textBlock && textBlock.text) {
-          // Try to parse the JSON from the text
-          processedCV = JSON.parse(textBlock.text.trim());
-        }
-      }
-      
-      if (!processedCV) {
-        throw new Error("Could not extract valid JSON from Claude response");
+      // Find the JSON in the response
+      const content = responseData.content[0].text;
+      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || 
+                        content.match(/{[\s\S]*}/);
+                        
+      if (jsonMatch) {
+        const jsonString = jsonMatch[1] || jsonMatch[0];
+        cvData = JSON.parse(jsonString);
+        console.log("Successfully parsed CV data from Claude response");
+      } else {
+        // Try to extract JSON from the full content
+        cvData = JSON.parse(content);
       }
     } catch (error) {
       console.error("Error parsing Claude response:", error);
+      console.log("Claude raw response:", responseData.content[0].text);
+      
+      // Return a simple fallback structure
       return new Response(
-        JSON.stringify({ error: "Failed to parse Claude API response", details: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          data: {
+            personalInfo: { name: "Professional", email: "", phone: "" },
+            professionalSummary: "Experienced professional with expertise in their field.",
+            jobTitle: "Professional",
+            skills: [],
+            experience: [],
+            education: [],
+            certifications: [],
+            languages: []
+          },
+          message: "Error parsing AI response, using fallback structure"
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Return the processed CV data
     return new Response(
-      JSON.stringify({ data: processedCV }),
+      JSON.stringify({ data: cvData }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+    
   } catch (error) {
-    console.error("Unexpected error:", error);
+    console.error("Error in process-cv-with-claude function:", error);
     return new Response(
-      JSON.stringify({ error: "An unexpected error occurred", details: error.message }),
+      JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

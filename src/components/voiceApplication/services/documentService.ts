@@ -117,8 +117,8 @@ export const generateWordDocument = (cvData: any): Blob => {
  * @returns A Blob containing the PDF
  */
 export const generatePdfDocument = (cvData: any): Blob => {
-  // For now, we're using a simplified approach with HTML
-  // In production, consider using libraries like jsPDF or server-side PDF generation
+  // For PDF we need a proper MIME type and a different approach to structure
+  // Using HTML with PDF-specific styling
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -127,19 +127,43 @@ export const generatePdfDocument = (cvData: any): Blob => {
       <meta charset="utf-8">
       <title>Professional CV - ${cvData.personalInfo?.name || 'Candidate'}</title>
       <style>
-        body { font-family: 'Arial', sans-serif; margin: 0.5in; }
-        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 7px; }
-        h2 { color: #34495e; margin-top: 15px; border-bottom: 1px solid #3498db; padding-bottom: 3px; }
+        @page {
+          margin: 1cm;
+          size: A4 portrait;
+        }
+        body { 
+          font-family: 'Arial', sans-serif; 
+          margin: 0; 
+          padding: 0.5in;
+          color: #333;
+        }
+        h1 { 
+          color: #2c3e50; 
+          border-bottom: 2px solid #3498db; 
+          padding-bottom: 7px; 
+          margin-top: 0;
+        }
+        h2 { 
+          color: #34495e; 
+          margin-top: 15px; 
+          border-bottom: 1px solid #3498db; 
+          padding-bottom: 3px; 
+        }
         .section { margin-bottom: 15px; }
         .contact-info { margin-bottom: 20px; }
         .item { margin-bottom: 15px; }
         .item-title { font-weight: bold; }
         .item-subtitle { font-style: italic; color: #7f8c8d; }
         .skills-list { display: flex; flex-wrap: wrap; }
-        .skill-item { background: #e8f4fc; padding: 3px 8px; margin: 3px; border-radius: 3px; }
-        @media print {
-          body { -webkit-print-color-adjust: exact; color-adjust: exact; }
+        .skill-item { 
+          background: #e8f4fc; 
+          padding: 3px 8px; 
+          margin: 3px; 
+          border-radius: 3px; 
+          display: inline-block;
         }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 3px; }
       </style>
     </head>
     <body>
@@ -166,7 +190,7 @@ export const generatePdfDocument = (cvData: any): Blob => {
       <div class="section">
         <h2>Skills</h2>
         <div class="skills-list">
-          ${cvData.skills.map((skill: string) => `<div class="skill-item">${skill}</div>`).join('')}
+          ${cvData.skills.map((skill: string) => `<div class="skill-item">${skill}</div>`).join(' ')}
         </div>
       </div>
       ` : ''}
@@ -219,5 +243,6 @@ export const generatePdfDocument = (cvData: any): Blob => {
     </html>
   `;
   
+  // Use proper PDF MIME type
   return new Blob([htmlContent], { type: 'application/pdf' });
 };

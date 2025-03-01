@@ -64,19 +64,19 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
     ? `\n\n## Experience\n- ${jobTitle} at ${company}\n  *${experienceLabel}*`
     : `\n\n## Experience\n- ${jobTitle}\n  *${experienceLabel}*`;
   
-  // Construct the CV
+  // Construct the CV with improved spacing and formatting
   const cv = `# Professional CV: ${name}
 
 ## Contact Information
 - Email: ${email}
 - Phone: ${phone}
 
-## Summary
-${jobTitle} with ${experienceLabel ? experienceLabel : 'professional experience'}.
+## Professional Summary
+${jobTitle} with ${experienceLabel ? experienceLabel : 'professional experience'} specializing in delivering high-quality results and solutions.
 
 ${formattedSkillsSection}${companySection}${educationSection}
 
-*This CV was automatically generated from your interview with the AI agent.*`;
+*This CV was automatically generated from your interview with the AI agent. For a more detailed and enhanced version, please review and download the available document formats.*`;
 
   console.log('CV generation completed successfully');
   return cv;

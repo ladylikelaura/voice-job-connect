@@ -1,33 +1,9 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { generateCVFromTranscript } from './cvGenerator';
 import { generateWordDocument, generatePdfDocument } from './services/documentService';
 import { supabase } from '@/integrations/supabase/client';
-
-interface ProcessedCV {
-  personalInfo: {
-    name: string;
-    email: string;
-    phone: string;
-  };
-  professionalSummary: string;
-  jobTitle: string;
-  skills: string[];
-  experience: Array<{
-    company: string;
-    role: string;
-    duration: string;
-    responsibilities: string[];
-  }>;
-  education: Array<{
-    degree: string;
-    institution: string;
-    year: string;
-  }>;
-  certifications: string[];
-  languages: string[];
-}
+import { ProcessedCV } from './types';
 
 /**
  * Hook for handling CV generation functionality
@@ -148,11 +124,14 @@ export const useCVGeneration = () => {
     markdown += `## Contact Information\n`;
     if (personalInfo?.email) markdown += `- Email: ${personalInfo.email}\n`;
     if (personalInfo?.phone) markdown += `- Phone: ${personalInfo.phone}\n`;
+    if (personalInfo?.location) markdown += `- Location: ${personalInfo.location}\n`;
+    if (personalInfo?.linkedIn) markdown += `- LinkedIn: ${personalInfo.linkedIn}\n`;
+    if (personalInfo?.website) markdown += `- Website: ${personalInfo.website}\n`;
     
-    // Summary
+    // Summary - ensure it's properly formatted and professional
     markdown += `\n## Professional Summary\n${professionalSummary || `${jobTitle} with professional experience.`}\n`;
     
-    // Skills
+    // Skills - organized in a clean way
     if (skills && skills.length > 0) {
       markdown += `\n## Skills\n`;
       skills.forEach(skill => {
@@ -160,46 +139,48 @@ export const useCVGeneration = () => {
       });
     }
     
-    // Experience
+    // Experience - proper formatting with company, title, duration
     if (experience && experience.length > 0) {
-      markdown += `\n## Experience\n`;
+      markdown += `\n## Professional Experience\n`;
       experience.forEach(exp => {
-        markdown += `- ${exp.role} at ${exp.company}\n`;
-        if (exp.duration) markdown += `  *${exp.duration}*\n`;
+        markdown += `### ${exp.role} | ${exp.company}\n`;
+        if (exp.duration) markdown += `*${exp.duration}*\n\n`;
         if (exp.responsibilities && exp.responsibilities.length > 0) {
           exp.responsibilities.forEach(resp => {
-            markdown += `  - ${resp}\n`;
+            markdown += `- ${resp}\n`;
           });
         }
         markdown += '\n';
       });
     }
     
-    // Education
+    // Education - improved formatting
     if (education && education.length > 0) {
-      markdown += `\n## Education\n`;
+      markdown += `## Education\n`;
       education.forEach(edu => {
-        markdown += `- ${edu.degree} from ${edu.institution}`;
-        if (edu.year) markdown += ` (${edu.year})`;
-        markdown += '\n';
+        markdown += `### ${edu.degree}\n`;
+        markdown += `*${edu.institution}*`;
+        if (edu.year) markdown += ` | *${edu.year}*`;
+        markdown += '\n\n';
       });
     }
     
     // Certifications
     if (certifications && certifications.length > 0) {
-      markdown += `\n## Certifications\n`;
+      markdown += `## Certifications\n`;
       certifications.forEach(cert => {
         markdown += `- ${cert}\n`;
       });
+      markdown += '\n';
     }
     
     // Languages
     if (languages && languages.length > 0) {
-      markdown += `\n## Languages\n`;
-      markdown += `- ${languages.join(', ')}\n`;
+      markdown += `## Languages\n`;
+      markdown += `- ${languages.join('\n- ')}\n\n`;
     }
     
-    markdown += `\n*This CV was automatically generated and enhanced with AI based on your interview.*`;
+    markdown += `*This CV was automatically generated and enhanced with AI based on your interview.*`;
     
     return markdown;
   };
