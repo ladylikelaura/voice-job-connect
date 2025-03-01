@@ -19,6 +19,30 @@ export const useVoiceConversation = () => {
   // Refs
   const conversationRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Initialize AudioContext
+  useEffect(() => {
+    // Create AudioContext only when needed and only once
+    if (!audioContextRef.current) {
+      try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+        audioContextRef.current = new AudioContext();
+        console.log('AudioContext initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize AudioContext:', error);
+        toast.error('Audio system initialization failed. Please try again.');
+      }
+    }
+    
+    return () => {
+      // Cleanup AudioContext when component unmounts
+      if (audioContextRef.current) {
+        audioContextRef.current.close().catch(err => console.error('Error closing AudioContext:', err));
+        audioContextRef.current = null;
+      }
+    };
+  }, []);
 
   // Clean up on component unmount
   useEffect(() => {
@@ -87,6 +111,12 @@ export const useVoiceConversation = () => {
   // Start conversation with ElevenLabs
   const startConversation = async () => {
     try {
+      // Resume AudioContext if it was suspended (required by browsers)
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+        console.log('AudioContext resumed successfully');
+      }
+      
       // Request microphone access
       await navigator.mediaDevices.getUserMedia({ audio: true });
       
@@ -94,6 +124,8 @@ export const useVoiceConversation = () => {
       setIsProcessing(true);
       setInterviewTranscript([]);
       toast.info("Connecting to the interview agent...");
+      
+      console.log('Starting conversation with agent ID:', ELEVENLABS_AGENT_ID);
       
       // Initialize ElevenLabs conversation
       conversationRef.current = await Conversation.startSession({
@@ -126,7 +158,7 @@ export const useVoiceConversation = () => {
           }
         },
         onMessage: (message) => {
-          console.log('Message:', message);
+          console.log('Message received:', message);
           
           // Save message to transcript
           if ((message.source === 'ai' || message.source === 'user') && message.message) {
