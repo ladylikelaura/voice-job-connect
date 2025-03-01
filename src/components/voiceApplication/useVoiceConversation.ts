@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Conversation } from '@11labs/client';
@@ -20,6 +21,8 @@ export const useVoiceConversation = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const cvGenerationAttemptedRef = useRef<boolean>(false);
+  const disconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const shouldGenerateCVRef = useRef<boolean>(false);
 
   // Dispatch custom events for controlling page behavior
   const dispatchVoiceApplicationEvent = (eventName: string) => {
@@ -55,6 +58,9 @@ export const useVoiceConversation = () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      if (disconnectTimeoutRef.current) {
+        clearTimeout(disconnectTimeoutRef.current);
+      }
       if (conversationRef.current) {
         conversationRef.current.endSession();
       }
@@ -78,6 +84,19 @@ export const useVoiceConversation = () => {
     };
   }, [isCallActive]);
 
+  // Ensure CV generation after conversation ends
+  useEffect(() => {
+    if (!isCallActive && !generatedCV && interviewTranscript.length > 0 && shouldGenerateCVRef.current) {
+      console.log('End of call detected with transcript data - generating CV');
+      // Add a slight delay to ensure all transcript data is processed
+      const timeoutId = setTimeout(() => {
+        generateCV();
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isCallActive, generatedCV, interviewTranscript]);
+
   // Generate a CV based on the conversation
   const generateCV = () => {
     // Prevent duplicate generation
@@ -88,6 +107,7 @@ export const useVoiceConversation = () => {
     
     if (interviewTranscript.length === 0) {
       console.log('No transcript data available, cannot generate CV');
+      toast.error("No conversation data available to generate CV");
       return;
     }
     
@@ -103,6 +123,8 @@ export const useVoiceConversation = () => {
     } catch (error) {
       console.error('Error generating CV:', error);
       toast.error("Error generating CV. Please try again.");
+      // Reset the flag to allow another attempt
+      cvGenerationAttemptedRef.current = false;
     } finally {
       setIsProcessing(false);
     }
@@ -130,6 +152,7 @@ export const useVoiceConversation = () => {
       // Reset CV generation state
       setGeneratedCV(null);
       cvGenerationAttemptedRef.current = false;
+      shouldGenerateCVRef.current = false;
       
       // Resume AudioContext if it was suspended (required by browsers)
       if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
@@ -167,10 +190,10 @@ export const useVoiceConversation = () => {
           // Dispatch event to notify that voice application has ended
           dispatchVoiceApplicationEvent('voiceApplicationEnd');
           
-          // Always generate CV when session ends if we have transcript data
-          if (interviewTranscript.length > 0 && !generatedCV && !cvGenerationAttemptedRef.current) {
-            console.log('Automatically generating CV after disconnect');
-            generateCV();
+          // Set flag to generate CV after disconnect
+          if (interviewTranscript.length > 0) {
+            console.log('Setting flag to generate CV after disconnect');
+            shouldGenerateCVRef.current = true;
           }
         },
         onError: (error) => {
@@ -181,10 +204,10 @@ export const useVoiceConversation = () => {
           // Dispatch event to notify that voice application has ended (on error)
           dispatchVoiceApplicationEvent('voiceApplicationEnd');
           
-          // Attempt to generate CV even on error if we have transcript data
-          if (interviewTranscript.length > 0 && !generatedCV && !cvGenerationAttemptedRef.current) {
-            console.log('Generating CV despite error');
-            generateCV();
+          // Set flag to generate CV even on error if we have transcript data
+          if (interviewTranscript.length > 0) {
+            console.log('Setting flag to generate CV despite error');
+            shouldGenerateCVRef.current = true;
           }
         },
         onMessage: (message) => {
@@ -210,10 +233,8 @@ export const useVoiceConversation = () => {
               message.message.toLowerCase().includes('conclude')
             )
           ) {
-            if (!generatedCV && !cvGenerationAttemptedRef.current) {
-              console.log('Agent mentioned CV generation or session conclusion');
-              generateCV();
-            }
+            console.log('Agent mentioned CV generation or session conclusion - flagging for generation');
+            shouldGenerateCVRef.current = true;
           }
         },
         onModeChange: ({ mode }) => {
@@ -255,10 +276,18 @@ export const useVoiceConversation = () => {
     // Dispatch event to notify that voice application has ended
     dispatchVoiceApplicationEvent('voiceApplicationEnd');
     
-    // Explicitly generate CV after conversation ends if not already done
-    if (!generatedCV && !cvGenerationAttemptedRef.current && interviewTranscript.length > 0) {
-      console.log('Explicitly generating CV after endConversation');
-      setTimeout(() => generateCV(), 500); // Short delay to ensure UI updates first
+    // Flag CV generation after ending conversation
+    if (interviewTranscript.length > 0) {
+      console.log('Flagging CV generation after endConversation');
+      shouldGenerateCVRef.current = true;
+      
+      // Set a timeout to ensure CV generation happens 
+      disconnectTimeoutRef.current = setTimeout(() => {
+        if (!generatedCV && !cvGenerationAttemptedRef.current) {
+          console.log('Forcing CV generation after timeout');
+          generateCV();
+        }
+      }, 1500);
     } else {
       toast.success("Interview completed.");
     }
@@ -266,10 +295,14 @@ export const useVoiceConversation = () => {
 
   // Reset the application
   const resetApplication = () => {
+    if (disconnectTimeoutRef.current) {
+      clearTimeout(disconnectTimeoutRef.current);
+    }
     setGeneratedCV(null);
     setCallDuration(0);
     setInterviewTranscript([]);
     cvGenerationAttemptedRef.current = false;
+    shouldGenerateCVRef.current = false;
     toast.info("Application reset. Ready to start again.");
   };
 
