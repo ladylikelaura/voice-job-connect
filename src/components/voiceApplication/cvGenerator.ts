@@ -144,13 +144,13 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
     }
   }
   
-  // Generate skills section
-  let skillsSection = '';
+  // Generate skills section string
+  let formattedSkillsSection = '';
   if (skills.length > 0) {
-    skillsSection = '## Skills\n';
-    skillsSection += skills.map(skill => `- ${skill}`).join('\n');
+    formattedSkillsSection = '## Skills\n';
+    formattedSkillsSection += skills.map(skill => `- ${skill}`).join('\n');
   } else {
-    skillsSection = '## Skills\n- Professional skills to be added';
+    formattedSkillsSection = '## Skills\n- Professional skills to be added';
   }
   
   // Generate education section
@@ -182,7 +182,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
 ## Summary
 ${jobTitle} with ${experienceLabel ? experienceLabel : 'professional experience'}.
 
-${skillsSection}${companySection}${educationSection}
+${formattedSkillsSection}${companySection}${educationSection}
 
 *This CV was automatically generated from your interview with the AI agent.*`;
 };
