@@ -29,4 +29,53 @@ describe('cvGenerator', () => {
     
     expect(result).toContain('8+');
   });
+  
+  it('extracts name and contact information correctly', () => {
+    const transcript = [
+      'Agent: Can you introduce yourself?', 
+      'You: My name is Jane Smith and my email is jane.smith@example.com. You can reach me at (555) 123-4567.'
+    ];
+    const result = generateCVFromTranscript(transcript);
+    
+    expect(result).toContain('Jane Smith');
+    expect(result).toContain('jane.smith@example.com');
+    expect(result).toContain('(555) 123-4567');
+  });
+  
+  it('extracts education information correctly', () => {
+    const transcript = [
+      'Agent: Tell me about your education.', 
+      'You: I graduated from Stanford University in 2019 with a Master of Science in Artificial Intelligence.'
+    ];
+    const result = generateCVFromTranscript(transcript);
+    
+    expect(result).toContain('Master of Science in Artificial Intelligence');
+    expect(result).toContain('Stanford University');
+    expect(result).toContain('2019');
+  });
+  
+  it('extracts company information correctly', () => {
+    const transcript = [
+      'Agent: Where do you work?', 
+      'You: I currently work at Google as a Software Engineer.'
+    ];
+    const result = generateCVFromTranscript(transcript);
+    
+    expect(result).toContain('Google');
+  });
+  
+  it('extracts multiple skills from detailed conversation', () => {
+    const transcript = [
+      'Agent: What technologies are you familiar with?', 
+      'You: I\'m proficient in React, TypeScript, and Node.js. I also have experience with AWS, Docker, and GraphQL.'
+    ];
+    const result = generateCVFromTranscript(transcript);
+    
+    expect(result).toContain('React');
+    expect(result).toContain('TypeScript');
+    expect(result).toContain('Node.js');
+    expect(result).toContain('AWS');
+    expect(result).toContain('Docker');
+    expect(result).toContain('GraphQL');
+  });
 });
