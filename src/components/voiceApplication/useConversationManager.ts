@@ -76,10 +76,8 @@ export const useConversationManager = (
           dispatchVoiceApplicationEvent('voiceApplicationEnd');
           
           // Set flag to generate CV after disconnect
-          if (shouldGenerateCVRef.current) {
-            console.log('Setting flag to generate CV after disconnect');
-            shouldGenerateCVRef.current = true;
-          }
+          shouldGenerateCVRef.current = true;
+          console.log('Setting CV generation flag to true after disconnect');
         },
         onError: (error) => {
           console.error('Error:', error);
@@ -113,7 +111,9 @@ export const useConversationManager = (
               message.message.toLowerCase().includes('prepare your cv') ||
               message.message.toLowerCase().includes('thank you for your time') ||
               message.message.toLowerCase().includes('ended') ||
-              message.message.toLowerCase().includes('conclude')
+              message.message.toLowerCase().includes('conclude') ||
+              message.message.toLowerCase().includes('goodbye') ||
+              message.message.toLowerCase().includes('end our conversation')
             )
           ) {
             console.log('Agent mentioned CV generation or session conclusion - flagging for generation');
@@ -144,24 +144,24 @@ export const useConversationManager = (
     setIsProcessing(true);
     toast.info("Ending the interview...");
     
-    if (conversationRef.current) {
-      try {
+    try {
+      // Set the flag to generate CV before ending session
+      shouldGenerateCVRef.current = true;
+      console.log('Setting CV generation flag to true before ending conversation');
+      
+      if (conversationRef.current) {
         await conversationRef.current.endSession();
-      } catch (error) {
-        console.error('Error ending conversation:', error);
       }
+    } catch (error) {
+      console.error('Error ending conversation:', error);
+    } finally {
       conversationRef.current = null;
+      setIsCallActive(false);
+      setIsProcessing(false);
+      
+      // Dispatch event to notify that voice application has ended
+      dispatchVoiceApplicationEvent('voiceApplicationEnd');
     }
-    
-    setIsCallActive(false);
-    setIsProcessing(false);
-    
-    // Dispatch event to notify that voice application has ended
-    dispatchVoiceApplicationEvent('voiceApplicationEnd');
-    
-    // Flag CV generation after ending conversation
-    console.log('Flagging CV generation after endConversation');
-    shouldGenerateCVRef.current = true;
   };
 
   return {

@@ -8,10 +8,12 @@
 export const generateCVFromTranscript = (transcript: string[]): string => {
   // Join all transcript lines for easier processing
   const fullTranscript = transcript.join('\n');
+  console.log('Starting CV generation from transcript with', transcript.length, 'lines');
   
   // Filter to only get agent messages that contain summarized information
   const agentLines = transcript.filter(line => line.startsWith('Agent:'));
   const agentText = agentLines.join('\n');
+  console.log('Found', agentLines.length, 'agent messages for CV generation');
 
   // Default values
   let name = 'Your Name';
@@ -28,6 +30,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   const nameMatch = agentText.match(namePattern) || fullTranscript.match(namePattern);
   if (nameMatch && nameMatch[1]) {
     name = nameMatch[1].trim();
+    console.log('Extracted name:', name);
   }
   
   // Email
@@ -35,6 +38,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   const emailMatch = agentText.match(emailPattern) || fullTranscript.match(emailPattern);
   if (emailMatch) {
     email = emailMatch[0];
+    console.log('Extracted email:', email);
   }
   
   // Phone
@@ -42,6 +46,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   const phoneMatch = agentText.match(phonePattern) || fullTranscript.match(phonePattern);
   if (phoneMatch) {
     phone = phoneMatch[0];
+    console.log('Extracted phone:', phone);
   }
   
   // Job Title - prioritize agent's assessment
@@ -55,6 +60,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
     const match = agentText.match(pattern);
     if (match && match[1]) {
       jobTitle = match[1].trim();
+      console.log('Extracted job title:', jobTitle);
       break;
     }
   }
@@ -64,6 +70,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   const experienceMatch = agentText.match(experiencePattern) || fullTranscript.match(experiencePattern);
   if (experienceMatch && experienceMatch[1]) {
     yearsOfExperience = experienceMatch[1];
+    console.log('Extracted years of experience:', yearsOfExperience);
   }
   
   // Company
@@ -76,6 +83,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
     const match = agentText.match(pattern);
     if (match && match[1]) {
       company = match[1].trim();
+      console.log('Extracted company:', company);
       break;
     }
   }
@@ -87,6 +95,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
     // Look for comma or 'and' separated skills
     const potentialSkills = skillsText.split(/(?:,|\sand\s|;|\n|\r|\s+\/\s+)/).map(s => s.trim());
     skills = potentialSkills.filter(s => s.length > 0 && s.length < 25);
+    console.log('Extracted skills:', skills);
   }
   
   // If no skills found in a dedicated section, try looking for technology mentions
@@ -108,6 +117,10 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
         skills.push(tech);
       }
     }
+    
+    if (skills.length > 0) {
+      console.log('Extracted skills from keywords:', skills);
+    }
   }
   
   // Education
@@ -127,6 +140,10 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
     }
   }
   
+  if (education.length > 0) {
+    console.log('Extracted education:', education);
+  }
+  
   // If education still empty, check for degree types
   if (education.length === 0) {
     const degreeTypes = [
@@ -139,6 +156,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
       if (match) {
         const context = agentText.substring(Math.max(0, match.index! - 50), Math.min(agentText.length, match.index! + 50));
         education.push(context.trim());
+        console.log('Extracted education from context:', context.trim());
         break;
       }
     }
@@ -173,7 +191,7 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
     : `\n\n## Experience\n- ${jobTitle}\n  *${experienceLabel}*`;
   
   // Construct the CV
-  return `# Professional CV: ${name}
+  const cv = `# Professional CV: ${name}
 
 ## Contact Information
 - Email: ${email}
@@ -185,4 +203,7 @@ ${jobTitle} with ${experienceLabel ? experienceLabel : 'professional experience'
 ${formattedSkillsSection}${companySection}${educationSection}
 
 *This CV was automatically generated from your interview with the AI agent.*`;
+
+  console.log('CV generation completed successfully');
+  return cv;
 };

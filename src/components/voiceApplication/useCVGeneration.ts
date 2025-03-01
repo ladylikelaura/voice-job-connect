@@ -30,20 +30,32 @@ export const useCVGeneration = () => {
     }
     
     cvGenerationAttemptedRef.current = true;
-    console.log('Generating CV based on transcript');
+    console.log('Generating CV based on transcript with', interviewTranscript.length, 'lines');
     setIsProcessing(true);
     
     try {
-      console.log('Transcript data for CV generation:', interviewTranscript);
-      const sampleCV = generateCVFromTranscript(interviewTranscript);
-      setGeneratedCV(sampleCV);
-      toast.success("CV generated based on your responses!");
+      // Add a small delay to ensure all transcript data is processed
+      setTimeout(() => {
+        try {
+          console.log('Transcript data for CV generation:', interviewTranscript);
+          const sampleCV = generateCVFromTranscript(interviewTranscript);
+          console.log('CV generated successfully, setting state');
+          setGeneratedCV(sampleCV);
+          toast.success("CV generated based on your responses!");
+        } catch (error) {
+          console.error('Error in CV generation timeout callback:', error);
+          toast.error("Error generating CV. Please try again.");
+          // Reset the flag to allow another attempt
+          cvGenerationAttemptedRef.current = false;
+        } finally {
+          setIsProcessing(false);
+        }
+      }, 500);
     } catch (error) {
-      console.error('Error generating CV:', error);
+      console.error('Error setting up CV generation:', error);
       toast.error("Error generating CV. Please try again.");
       // Reset the flag to allow another attempt
       cvGenerationAttemptedRef.current = false;
-    } finally {
       setIsProcessing(false);
     }
   };

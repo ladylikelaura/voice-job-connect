@@ -59,15 +59,39 @@ export const useVoiceConversation = (): VoiceConversationHook => {
 
   // Ensure CV generation after conversation ends
   useEffect(() => {
+    console.log('useEffect triggered - isCallActive:', isCallActive, 'generatedCV:', !!generatedCV, 'transcript length:', interviewTranscript.length, 'shouldGenerateCV:', shouldGenerateCVRef.current);
+    
     if (!isCallActive && !generatedCV && interviewTranscript.length > 0 && shouldGenerateCVRef.current) {
       console.log('End of call detected with transcript data - generating CV');
       // Add a slight delay to ensure all transcript data is processed
       const timeoutId = setTimeout(() => {
-        generateCV(interviewTranscript, cvGenerationAttemptedRef);
-      }, 1000);
+        if (!generatedCV && interviewTranscript.length > 0) {
+          console.log('Executing CV generation after delay');
+          generateCV(interviewTranscript, cvGenerationAttemptedRef);
+        }
+      }, 1500);
       
       return () => clearTimeout(timeoutId);
     }
+  }, [isCallActive, generatedCV, interviewTranscript, generateCV]);
+
+  // Additional check for CV generation after a fixed time
+  useEffect(() => {
+    // No need to setup this effect if already generated or no transcript
+    if (generatedCV || interviewTranscript.length === 0) {
+      return;
+    }
+    
+    // Set a backup timer to check if CV should be generated
+    const backupTimerId = setInterval(() => {
+      if (!isCallActive && !generatedCV && interviewTranscript.length > 0 && shouldGenerateCVRef.current) {
+        console.log('Backup timer check: CV should be generated - attempting now');
+        generateCV(interviewTranscript, cvGenerationAttemptedRef);
+        clearInterval(backupTimerId);
+      }
+    }, 3000);
+    
+    return () => clearInterval(backupTimerId);
   }, [isCallActive, generatedCV, interviewTranscript, generateCV]);
 
   // Wrapper for startConversation to reset state
@@ -82,20 +106,26 @@ export const useVoiceConversation = (): VoiceConversationHook => {
 
   // Wrapper for endConversation to handle CV generation
   const endConversation = async (): Promise<void> => {
+    // Flag CV generation before ending conversation
+    shouldGenerateCVRef.current = true;
+    console.log('Flagging CV generation in endConversation');
+    
     await terminateConversation();
     
-    // Flag CV generation after ending conversation
+    // Set a timeout to force CV generation if it hasn't happened yet
     if (interviewTranscript.length > 0) {
-      console.log('Flagging CV generation after endConversation');
-      shouldGenerateCVRef.current = true;
+      console.log('Setting up disconnect timeout for CV generation');
       
-      // Set a timeout to ensure CV generation happens 
+      if (disconnectTimeoutRef.current) {
+        clearTimeout(disconnectTimeoutRef.current);
+      }
+      
       disconnectTimeoutRef.current = setTimeout(() => {
-        if (!generatedCV && !cvGenerationAttemptedRef.current) {
+        if (!generatedCV && !cvGenerationAttemptedRef.current && interviewTranscript.length > 0) {
           console.log('Forcing CV generation after timeout');
           generateCV(interviewTranscript, cvGenerationAttemptedRef);
         }
-      }, 1500);
+      }, 2000);
     } else {
       toast.success("Interview completed.");
     }
