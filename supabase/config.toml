@@ -1,1 +1,4 @@
+
 project_id = "lkkvzbvgnutafrholvvy"
+[functions.process-cv-with-claude]
+verify_jwt = false

@@ -21,6 +21,7 @@ serve(async (req) => {
     const { transcriptSummary } = await req.json();
 
     if (!transcriptSummary || transcriptSummary.length === 0) {
+      console.error("Missing transcript summary");
       return new Response(
         JSON.stringify({ error: "Missing transcript summary" }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
