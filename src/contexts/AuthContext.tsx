@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             // Use timeout to ensure state is updated before navigation
             setTimeout(() => {
-              navigate('/jobs');
+              navigate('/dashboard'); // Changed from /jobs to /dashboard for consistency
             }, 100);
           }
         }
@@ -65,10 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         
         if (session?.user) {
-          // Use window.location for full page reload if needed
-          // This prevents issues with React Router state
+          // Don't use window.location for page navigation, use React Router instead
           if (window.location.pathname === '/auth') {
-            navigate('/jobs');
+            navigate('/dashboard'); // Changed from /jobs to /dashboard
           }
         }
       } catch (error) {
@@ -84,8 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (_event === 'SIGNED_IN' && session) {
-        // Ensure we navigate to the jobs page on sign in
-        navigate('/jobs');
+        // Ensure we navigate to the dashboard page on sign in
+        navigate('/dashboard'); // Changed from /jobs to /dashboard
         toast.success('Successfully signed in!');
       } else if (_event === 'SIGNED_OUT') {
         // Ensure we navigate to the auth page on sign out
@@ -127,10 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting Google sign in...'); // Debug log
       
-      // Get the current URL
+      // Get the current URL origin
       const currentOrigin = window.location.origin;
       
-      // Use the root URL to prevent 404 errors when redirecting back
+      // Use the current origin as the redirect URL
       const redirectUrl = `${currentOrigin}`;
       console.log('Redirect URL:', redirectUrl);
       
