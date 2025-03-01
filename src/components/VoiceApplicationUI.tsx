@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 import { Conversation } from '@11labs/client';
 
-// Replace with your actual agent ID
+// Replace with your actual agent ID - you've mentioned you already created one
+// This is just a placeholder - you should use your own agent ID from ElevenLabs
 const ELEVENLABS_AGENT_ID = '6djrCK5KXmMSzayY3uwc';
 
 export function VoiceApplicationUI() {
@@ -17,6 +18,7 @@ export function VoiceApplicationUI() {
   const [generatedCV, setGeneratedCV] = useState<string | null>(null);
   const [callDuration, setCallDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [interviewTranscript, setInterviewTranscript] = useState<string[]>([]);
   
   // Refs
   const conversationRef = useRef<any>(null);
@@ -82,11 +84,12 @@ export function VoiceApplicationUI() {
       
       setIsCallActive(true);
       setIsProcessing(true);
+      setInterviewTranscript([]);
       toast.info("Connecting to the interview agent...");
       
       // Initialize ElevenLabs conversation
       conversationRef.current = await Conversation.startSession({
-        agentId: ELEVENLABS_AGENT_ID,
+        agentId: ELEVENLABS_AGENT_ID, // Make sure this is your actual agent ID
         onConnect: () => {
           console.log('Connected to ElevenLabs');
           setIsProcessing(false);
@@ -104,6 +107,14 @@ export function VoiceApplicationUI() {
         },
         onMessage: (message) => {
           console.log('Message:', message);
+          
+          // Save message to transcript
+          if ((message.source === 'ai' || message.source === 'user') && message.message) {
+            setInterviewTranscript(prev => [
+              ...prev, 
+              `${message.source === 'ai' ? 'Agent' : 'You'}: ${message.message}`
+            ]);
+          }
           
           // If the agent mentions generating a CV, we'll create one
           if (
@@ -134,8 +145,34 @@ export function VoiceApplicationUI() {
   const generateCV = () => {
     setIsProcessing(true);
     
-    // This is a mock CV generation - in a real app, this would be based on the conversation
+    // In a real implementation, we would analyze the transcript to create a personalized CV
+    // For now, we'll use the saved transcript to make it slightly more personalized
     setTimeout(() => {
+      // Generate a more dynamic CV based on the conversation
+      let jobTitle = "Software Engineer";
+      let companyName = "Tech Company";
+      let yearsOfExperience = "5+";
+      
+      // Extract some basic info from transcript if available
+      if (interviewTranscript.length > 0) {
+        const fullTranscript = interviewTranscript.join(" ");
+        
+        // Very simple extraction logic - in a real app, you'd use more sophisticated NLP
+        if (fullTranscript.toLowerCase().includes("developer")) {
+          jobTitle = "Developer";
+        } else if (fullTranscript.toLowerCase().includes("designer")) {
+          jobTitle = "UI/UX Designer";
+        } else if (fullTranscript.toLowerCase().includes("manager")) {
+          jobTitle = "Project Manager";
+        }
+        
+        // Extract years of experience
+        const experienceMatch = fullTranscript.match(/(\d+)(?:\s+years?|\s+yrs?)\s+(?:of\s+)?experience/i);
+        if (experienceMatch && experienceMatch[1]) {
+          yearsOfExperience = `${experienceMatch[1]}+`;
+        }
+      }
+      
       const sampleCV = `# Professional CV
 
 ## Personal Information
@@ -144,7 +181,7 @@ export function VoiceApplicationUI() {
 - Phone: (123) 456-7890
 
 ## Professional Summary
-Experienced software engineer with 5+ years of experience in web development.
+Experienced ${jobTitle} with ${yearsOfExperience} years of experience in web development.
 
 ## Skills
 - JavaScript, TypeScript, React
@@ -153,12 +190,12 @@ Experienced software engineer with 5+ years of experience in web development.
 - AWS, Docker
 
 ## Experience
-### Senior Software Engineer - Tech Company
+### Senior ${jobTitle} - ${companyName}
 *January 2020 - Present*
 - Led development of customer-facing web applications
 - Implemented CI/CD pipelines reducing deployment time by 40%
 
-### Software Engineer - Startup Inc.
+### ${jobTitle} - Startup Inc.
 *June 2017 - December 2019*
 - Developed RESTful APIs for mobile applications
 - Collaborated with cross-functional teams to deliver features
@@ -189,13 +226,16 @@ Experienced software engineer with 5+ years of experience in web development.
     toast.success("Interview completed. Your CV has been generated.");
     
     // Generate CV after conversation ends
-    generateCV();
+    if (!generatedCV) {
+      generateCV();
+    }
   };
 
   // Reset the application
   const resetApplication = () => {
     setGeneratedCV(null);
     setCallDuration(0);
+    setInterviewTranscript([]);
     toast.info("Application reset. Ready to start again.");
   };
 
@@ -277,6 +317,20 @@ Experienced software engineer with 5+ years of experience in web development.
           </Button>
         )}
       </div>
+
+      {/* Display interview transcript */}
+      {interviewTranscript.length > 0 && isCallActive && (
+        <div className="mt-4 p-4 bg-muted/50 rounded-md max-h-60 overflow-y-auto">
+          <h4 className="text-sm font-medium mb-2">Interview Progress:</h4>
+          <div className="space-y-2">
+            {interviewTranscript.map((line, index) => (
+              <p key={index} className="text-xs">
+                {line}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {generatedCV && (
         <div className="mt-6 p-4 bg-muted rounded-md">
