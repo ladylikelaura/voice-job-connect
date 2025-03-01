@@ -24,9 +24,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Handle hash fragments from OAuth redirects
     const handleHashFragment = async () => {
-      // Check if URL contains access_token
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        try {
+      try {
+        // Check if URL contains access_token
+        if (window.location.hash && window.location.hash.includes('access_token')) {
           console.log('Found access token in URL fragment, processing OAuth response');
           
           // Let Supabase handle the hash fragment to complete auth
@@ -38,15 +38,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else if (data.session) {
             console.log('Successfully processed OAuth response');
             toast.success('Successfully signed in!');
-            navigate('/jobs');
             
             // Clear the hash fragment without triggering a reload
             window.history.replaceState(null, document.title, window.location.pathname);
+            
+            // Use timeout to ensure state is updated before navigation
+            setTimeout(() => {
+              navigate('/jobs');
+            }, 100);
           }
-        } catch (err) {
-          console.error('Error handling hash fragment:', err);
-          toast.error('Authentication failed. Please try again.');
         }
+      } catch (err) {
+        console.error('Error handling hash fragment:', err);
+        toast.error('Authentication failed. Please try again.');
       }
     };
 
@@ -54,22 +58,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     handleHashFragment();
 
     // Check active sessions and subscribe to auth changes
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-      if (session?.user) {
-        navigate('/jobs');
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        if (session?.user) {
+          // Use window.location for full page reload if needed
+          // This prevents issues with React Router state
+          if (window.location.pathname === '/auth') {
+            navigate('/jobs');
+          }
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
+        setLoading(false);
       }
-    });
+    };
+    
+    checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('Auth state changed:', _event, session); // Debug log
       setUser(session?.user ?? null);
-      setLoading(false);
       
-      if (session?.user) {
+      if (_event === 'SIGNED_IN' && session) {
+        // Ensure we navigate to the jobs page on sign in
         navigate('/jobs');
         toast.success('Successfully signed in!');
+      } else if (_event === 'SIGNED_OUT') {
+        // Ensure we navigate to the auth page on sign out
+        navigate('/auth');
       }
     });
 
