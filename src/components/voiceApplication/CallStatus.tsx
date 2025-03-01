@@ -3,7 +3,13 @@ import React from 'react';
 import { Progress } from '@/components/ui/progress';
 
 interface CallStatusProps {
+  /**
+   * Indicates whether a call is currently active
+   */
   isCallActive: boolean;
+  /**
+   * The current duration of the call in seconds
+   */
   callDuration: number;
 }
 

@@ -4,13 +4,37 @@ import { Button } from '@/components/ui/button';
 import { Mic, Square, Volume2, VolumeX, RefreshCw } from 'lucide-react';
 
 interface ActionButtonsProps {
+  /**
+   * Indicates whether a call is currently active
+   */
   isCallActive: boolean;
+  /**
+   * Indicates whether the application is in a processing state
+   */
   isProcessing: boolean;
+  /**
+   * Indicates whether the microphone is muted
+   */
   isMuted: boolean;
+  /**
+   * The generated CV content, or null if not generated yet
+   */
   generatedCV: string | null;
+  /**
+   * Handler for starting a new conversation
+   */
   onStartConversation: () => void;
+  /**
+   * Handler for ending the current conversation
+   */
   onEndConversation: () => void;
+  /**
+   * Handler for toggling microphone mute state
+   */
   onToggleMute: () => void;
+  /**
+   * Handler for resetting the application to its initial state
+   */
   onResetApplication: () => void;
 }
 

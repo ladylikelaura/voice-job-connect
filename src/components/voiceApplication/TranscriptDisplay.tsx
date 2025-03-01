@@ -2,7 +2,13 @@
 import React from 'react';
 
 interface TranscriptDisplayProps {
+  /**
+   * Array of transcript lines from the interview
+   */
   interviewTranscript: string[];
+  /**
+   * Whether the transcript should be visible
+   */
   isVisible: boolean;
 }
 

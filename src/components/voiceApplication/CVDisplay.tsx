@@ -3,6 +3,9 @@ import React from 'react';
 import { FileText } from 'lucide-react';
 
 interface CVDisplayProps {
+  /**
+   * The generated CV content in markdown or text format
+   */
   generatedCV: string | null;
 }
 
