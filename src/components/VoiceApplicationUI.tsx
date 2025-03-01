@@ -99,11 +99,23 @@ export function VoiceApplicationUI() {
           console.log('Disconnected from ElevenLabs');
           setIsCallActive(false);
           setIsProcessing(false);
+          
+          // Always generate CV when session ends if we have transcript data
+          if (interviewTranscript.length > 0 && !generatedCV) {
+            console.log('Automatically generating CV after disconnect');
+            generateCV();
+          }
         },
         onError: (error) => {
           console.error('Error:', error);
           setIsProcessing(false);
           toast.error(`Error: ${error}`);
+          
+          // Attempt to generate CV even on error if we have transcript data
+          if (interviewTranscript.length > 0 && !generatedCV) {
+            console.log('Generating CV despite error');
+            generateCV();
+          }
         },
         onMessage: (message) => {
           console.log('Message:', message);
@@ -119,11 +131,19 @@ export function VoiceApplicationUI() {
           // If the agent mentions generating a CV, we'll create one
           if (
             message.source === 'ai' && 
-            (message.message.toLowerCase().includes('generate your cv') ||
-            message.message.toLowerCase().includes('create your resume') ||
-            message.message.toLowerCase().includes('prepare your cv'))
+            message.message && (
+              message.message.toLowerCase().includes('generate your cv') ||
+              message.message.toLowerCase().includes('create your resume') ||
+              message.message.toLowerCase().includes('prepare your cv') ||
+              message.message.toLowerCase().includes('thank you for your time') ||
+              message.message.toLowerCase().includes('ended') ||
+              message.message.toLowerCase().includes('conclude')
+            )
           ) {
-            generateCV();
+            if (!generatedCV) {
+              console.log('Agent mentioned CV generation or session conclusion');
+              generateCV();
+            }
           }
         },
         onModeChange: ({ mode }) => {
@@ -143,6 +163,13 @@ export function VoiceApplicationUI() {
 
   // Generate a sample CV based on the conversation
   const generateCV = () => {
+    // Prevent duplicate generation
+    if (generatedCV) {
+      console.log('CV already generated, skipping');
+      return;
+    }
+    
+    console.log('Generating CV based on transcript');
     setIsProcessing(true);
     
     // In a real implementation, we would analyze the transcript to create a personalized CV
@@ -217,7 +244,11 @@ Experienced ${jobTitle} with ${yearsOfExperience} years of experience in web dev
     toast.info("Ending the interview...");
     
     if (conversationRef.current) {
-      await conversationRef.current.endSession();
+      try {
+        await conversationRef.current.endSession();
+      } catch (error) {
+        console.error('Error ending conversation:', error);
+      }
       conversationRef.current = null;
     }
     
@@ -225,8 +256,9 @@ Experienced ${jobTitle} with ${yearsOfExperience} years of experience in web dev
     setIsProcessing(false);
     toast.success("Interview completed. Your CV has been generated.");
     
-    // Generate CV after conversation ends
-    if (!generatedCV) {
+    // Always generate CV after conversation ends
+    if (!generatedCV && interviewTranscript.length > 0) {
+      console.log('Explicitly generating CV after endConversation');
       generateCV();
     }
   };
