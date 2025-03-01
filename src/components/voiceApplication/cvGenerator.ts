@@ -25,10 +25,10 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   console.log('Found', agentLines.length, 'agent messages for CV generation');
 
   // Extract personal information
-  const { name, email, phone } = extractPersonalInfo(agentText, fullTranscript);
+  const { name, email, phone, location } = extractPersonalInfo(agentText, fullTranscript);
   
   // Extract professional information
-  const { jobTitle, yearsOfExperience, company } = extractProfessionalInfo(agentText, fullTranscript);
+  const { jobTitle, yearsOfExperience, company, responsibilities } = extractProfessionalInfo(agentText, fullTranscript);
   
   // Extract skills
   const skills = extractSkills(agentText);
@@ -36,47 +36,106 @@ export const generateCVFromTranscript = (transcript: string[]): string => {
   // Extract education
   const education = extractEducation(agentText);
   
-  // Generate skills section string
-  let formattedSkillsSection = '';
+  // Format name as header
+  const nameHeader = name ? `# ${name}` : '# Professional CV';
+  
+  // Format contact information
+  const contactInfo = `Phone No: ${phone || '[Your Phone Number]'} | Email: ${email || '[Your Email]'}`;
+  const locationInfo = location ? `${location}` : '[Your Location]';
+  
+  // Generate profile summary
+  let profileSummary = `## PROFILE SUMMARY\n`;
+  profileSummary += `Experienced ${jobTitle || 'professional'} ${yearsOfExperience ? `with ${yearsOfExperience} years of expertise` : 'with professional experience'} in delivering outstanding results. `;
+  profileSummary += `Dedicated and detail-oriented, committed to providing excellent service. `;
+  profileSummary += `Proficient in utilizing relevant tools and technologies to achieve optimal outcomes. `;
+  profileSummary += `Seeking opportunities to apply skills and expertise in a challenging position within an innovative organization.`;
+  
+  // Generate skills section
+  let skillsSection = `## SKILLS HIGHLIGHT\n`;
   if (skills.length > 0) {
-    formattedSkillsSection = '## Skills\n';
-    formattedSkillsSection += skills.map(skill => `- ${skill}`).join('\n');
+    // Split skills into two columns
+    const halfLength = Math.ceil(skills.length / 2);
+    const firstColumn = skills.slice(0, halfLength);
+    const secondColumn = skills.slice(halfLength);
+    
+    // First column
+    firstColumn.forEach(skill => {
+      skillsSection += `- ${skill}\n`;
+    });
+    
+    // Add separator for markdown
+    skillsSection += '\n';
+    
+    // Second column
+    secondColumn.forEach(skill => {
+      skillsSection += `- ${skill}\n`;
+    });
   } else {
-    formattedSkillsSection = '## Skills\n- Professional skills to be added';
+    skillsSection += `- Proficient in relevant industry tools and software\n`;
+    skillsSection += `- Excellent communication and interpersonal skills\n`;
+    skillsSection += `- Problem-solving and analytical thinking\n`;
+    skillsSection += `- Time management and organizational abilities\n`;
+  }
+  
+  // Generate work experience section
+  let experienceSection = `## WORK EXPERIENCE\n`;
+  if (company) {
+    const duration = `Jan ${new Date().getFullYear() - (yearsOfExperience || 1)} - Present`;
+    experienceSection += `${jobTitle || 'Professional'} - ${company} | ${duration}\n\n`;
+    experienceSection += `Effectively managed responsibilities and delivered excellent results in a professional environment.\n\n`;
+    
+    if (responsibilities && responsibilities.length > 0) {
+      responsibilities.forEach(duty => {
+        experienceSection += `- ${duty}\n`;
+      });
+    } else {
+      experienceSection += `- Managed key projects and initiatives with attention to detail and timeliness\n`;
+      experienceSection += `- Collaborated with team members to achieve organizational objectives\n`;
+      experienceSection += `- Maintained high standards of quality and professionalism in all tasks\n`;
+      experienceSection += `- Contributed to process improvements and efficiency enhancements\n`;
+    }
+  } else {
+    experienceSection += `[Position Title] - [Company Name] | [Start Date] - [End Date]\n\n`;
+    experienceSection += `- Responsibility or achievement description with measurable results\n`;
+    experienceSection += `- Another key responsibility or notable accomplishment\n`;
+    experienceSection += `- Additional detail about your contributions or skills demonstrated\n`;
   }
   
   // Generate education section
-  let educationSection = '';
+  let educationSection = `## EDUCATION\n`;
   if (education.length > 0) {
-    educationSection = '\n\n## Education\n';
-    educationSection += education.map(edu => `- ${edu}`).join('\n');
+    education.forEach((edu, index) => {
+      const yearRange = `[${2010 + index * 4}] - [${2014 + index * 4}]`;
+      educationSection += `- ${edu}\n`;
+      educationSection += `  [University/Institution Name] | ${yearRange}\n\n`;
+    });
   } else {
-    educationSection = '\n\n## Education\n- Education details to be added';
+    educationSection += `- [Degree Name] in [Field of Study]\n`;
+    educationSection += `  [University/Institution Name] | [Start Year] - [End Year]\n`;
   }
   
-  // Generate experience label
-  const experienceLabel = yearsOfExperience 
-    ? `${yearsOfExperience}+ years of experience` 
-    : 'Professional experience';
-  
-  // Generate company section
-  const companySection = company 
-    ? `\n\n## Experience\n- ${jobTitle} at ${company}\n  *${experienceLabel}*`
-    : `\n\n## Experience\n- ${jobTitle}\n  *${experienceLabel}*`;
+  // Generate certifications section
+  const certificationsSection = `## CERTIFICATIONS & TRAINING\n` +
+    `- [Certification Name] from [Issuing Organization]\n` +
+    `- [Training Program] - [Institution/Provider]\n`;
   
   // Construct the CV with improved spacing and formatting
-  const cv = `# Professional CV: ${name}
+  const cv = `${nameHeader}
 
-## Contact Information
-- Email: ${email}
-- Phone: ${phone}
+${contactInfo}
+${locationInfo}
 
-## Professional Summary
-${jobTitle} with ${experienceLabel ? experienceLabel : 'professional experience'} specializing in delivering high-quality results and solutions.
+${profileSummary}
 
-${formattedSkillsSection}${companySection}${educationSection}
+${skillsSection}
 
-*This CV was automatically generated from your interview with the AI agent. For a more detailed and enhanced version, please review and download the available document formats.*`;
+${experienceSection}
+
+${educationSection}
+
+${certificationsSection}
+
+*This CV was automatically generated from your interview. You can download it in various formats for further customization.*`;
 
   console.log('CV generation completed successfully');
   return cv;

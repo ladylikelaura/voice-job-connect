@@ -25,19 +25,35 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({
 }) => {
   if (!generatedCV) return null;
   
-  // Convert markdown headers to HTML
+  // Convert markdown headers to HTML with better formatting
   const formatMarkdown = (text: string) => {
     // Format headers
     let formatted = text
-      .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold my-4">$1</h1>')
-      .replace(/^## (.+)$/gm, '<h2 class="text-xl font-semibold my-3 text-primary">$1</h2>')
-      .replace(/^### (.+)$/gm, '<h3 class="text-lg font-medium my-2">$1</h3>')
-      // Format lists
-      .replace(/^- (.+)$/gm, '<li class="ml-5 list-disc">$1</li>')
+      // Format the name as the main title (centered)
+      .replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold mb-2 text-center">$1</h1>')
+      // Format contact info (centered)
+      .replace(/^(Phone No:.+)$/gm, '<p class="text-center text-sm mb-1">$1</p>')
+      // Format location (centered)
+      .replace(/^([A-Za-z].+(?:, )?[A-Za-z]+)$/gm, (match, p1) => {
+        // Only replace if it's not part of any other formatting and likely a location
+        if (!p1.startsWith('#') && !p1.includes(':') && !p1.startsWith('-')) {
+          return `<p class="text-center text-sm mb-4">$1</p>`;
+        }
+        return match; // Return unchanged if not matching our criteria
+      })
+      // Format section headers
+      .replace(/^## ([A-Z\s&]+)$/gm, '<h2 class="text-xl font-bold my-3 text-primary border-b border-gray-300 pb-1">$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold my-2">$1</h3>')
+      // Format work experience titles
+      .replace(/^([^-#\n].+) - (.+) \| (.+)$/gm, '<div class="flex justify-between my-2"><span class="font-semibold">$1 - $2</span><span class="text-sm">$3</span></div>')
+      // Format lists for responsibilities and skills
+      .replace(/^- (.+)$/gm, '<li class="ml-5 list-disc my-1">$1</li>')
       // Format italic text
-      .replace(/\*([^*]+)\*/g, '<em class="text-muted-foreground">$1</em>')
+      .replace(/\*([^*]+)\*/g, '<em class="text-gray-600">$1</em>')
+      // Format education listings
+      .replace(/^\s\s([^-#\n].+) \| (.+)$/gm, '<div class="ml-5 text-sm mb-3">$1 | $2</div>')
       // Add paragraph spacing
-      .replace(/\n\n/g, '<div class="my-3"></div>');
+      .replace(/\n\n/g, '<div class="my-2"></div>');
     
     return formatted;
   };
@@ -98,7 +114,7 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({
         </div>
       </div>
       <div 
-        className="whitespace-pre-wrap text-sm leading-relaxed cv-content"
+        className="whitespace-pre-wrap text-sm leading-relaxed cv-content max-w-3xl mx-auto bg-white p-6 rounded shadow"
         dangerouslySetInnerHTML={{ __html: formatMarkdown(generatedCV) }}
       />
     </div>
