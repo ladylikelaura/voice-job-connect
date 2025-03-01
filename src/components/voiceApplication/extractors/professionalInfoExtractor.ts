@@ -8,6 +8,7 @@ interface ProfessionalInfo {
   jobTitle: string;
   yearsOfExperience: string;
   company: string;
+  responsibilities?: string[];
 }
 
 /**
@@ -21,6 +22,7 @@ export const extractProfessionalInfo = (
   let jobTitle = 'Professional';
   let yearsOfExperience = '';
   let company = '';
+  let responsibilities: string[] = [];
   
   // Job Title - prioritize agent's assessment
   const jobPatterns = [
@@ -61,5 +63,23 @@ export const extractProfessionalInfo = (
     }
   }
   
-  return { jobTitle, yearsOfExperience, company };
+  // Extract responsibilities
+  const responsibilityPatterns = [
+    /(?:responsible for|duties include|responsibilities include|key responsibilities|main tasks|handled|managed|led|developed|created|implemented|coordinated|designed|maintained|oversaw|analyzed)\s+([^.]+)/gi
+  ];
+  
+  for (const pattern of responsibilityPatterns) {
+    let match;
+    while ((match = pattern.exec(agentText)) !== null) {
+      if (match && match[1]) {
+        const responsibility = match[1].trim();
+        if (responsibility.length > 10) {
+          responsibilities.push(responsibility);
+          console.log('Extracted responsibility:', responsibility);
+        }
+      }
+    }
+  }
+  
+  return { jobTitle, yearsOfExperience, company, responsibilities };
 };

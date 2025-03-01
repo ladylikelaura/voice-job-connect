@@ -8,6 +8,7 @@ interface PersonalInfo {
   name: string;
   email: string;
   phone: string;
+  location?: string;
 }
 
 /**
@@ -21,6 +22,7 @@ export const extractPersonalInfo = (
   let name = 'Your Name';
   let email = 'your.email@example.com';
   let phone = '(555) 123-4567';
+  let location = '';
   
   // Look for name patterns in agent messages
   const namePattern = /(?:name is|candidate is|candidate's name is|candidate:|individual is|applicant is|called)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})/i;
@@ -46,5 +48,13 @@ export const extractPersonalInfo = (
     console.log('Extracted phone:', phone);
   }
   
-  return { name, email, phone };
+  // Location
+  const locationPattern = /(?:lives in|located in|based in|resides in|from|location is|address is)\s+([A-Z][a-z]+(?:[\s,]+[A-Z][a-z]+){0,3})/i;
+  const locationMatch = agentText.match(locationPattern) || fullTranscript.match(locationPattern);
+  if (locationMatch && locationMatch[1]) {
+    location = locationMatch[1].trim();
+    console.log('Extracted location:', location);
+  }
+  
+  return { name, email, phone, location };
 };
