@@ -25,7 +25,9 @@ export const useVoiceConversation = (): VoiceConversationHook => {
   const { 
     generatedCV, 
     setGeneratedCV, 
-    generateCV 
+    generateCV,
+    downloadWordDocument,
+    downloadPdfDocument
   } = useCVGeneration();
   
   const { 
@@ -154,6 +156,8 @@ export const useVoiceConversation = (): VoiceConversationHook => {
     startConversation,
     endConversation,
     toggleMute,
-    resetApplication
+    resetApplication,
+    downloadWordDocument,
+    downloadPdfDocument
   };
 };

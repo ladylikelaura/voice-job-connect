@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, FileWord, FilePdf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CVDisplayProps {
@@ -8,9 +8,21 @@ interface CVDisplayProps {
    * The generated CV content in markdown or text format
    */
   generatedCV: string | null;
+  /**
+   * Function to download Word document
+   */
+  downloadWordDocument?: () => void;
+  /**
+   * Function to download PDF document
+   */
+  downloadPdfDocument?: () => void;
 }
 
-export const CVDisplay: React.FC<CVDisplayProps> = ({ generatedCV }) => {
+export const CVDisplay: React.FC<CVDisplayProps> = ({ 
+  generatedCV, 
+  downloadWordDocument, 
+  downloadPdfDocument 
+}) => {
   if (!generatedCV) return null;
   
   // Convert markdown headers to HTML
@@ -30,7 +42,7 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({ generatedCV }) => {
     return formatted;
   };
 
-  const downloadCV = () => {
+  const downloadMarkdown = () => {
     const blob = new Blob([generatedCV], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -49,15 +61,41 @@ export const CVDisplay: React.FC<CVDisplayProps> = ({ generatedCV }) => {
           <FileText className="w-5 h-5 text-primary" />
           Generated CV
         </h4>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex gap-1 items-center"
-          onClick={downloadCV}
-        >
-          <Download className="w-4 h-4" />
-          Download
-        </Button>
+        <div className="flex gap-2">
+          {downloadWordDocument && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex gap-1 items-center"
+              onClick={downloadWordDocument}
+            >
+              <FileWord className="w-4 h-4" />
+              Word
+            </Button>
+          )}
+          
+          {downloadPdfDocument && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex gap-1 items-center"
+              onClick={downloadPdfDocument}
+            >
+              <FilePdf className="w-4 h-4" />
+              PDF
+            </Button>
+          )}
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex gap-1 items-center"
+            onClick={downloadMarkdown}
+          >
+            <Download className="w-4 h-4" />
+            Markdown
+          </Button>
+        </div>
       </div>
       <div 
         className="whitespace-pre-wrap text-sm leading-relaxed cv-content"

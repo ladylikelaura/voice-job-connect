@@ -19,7 +19,9 @@ export function VoiceApplicationUI() {
     startConversation,
     endConversation,
     toggleMute,
-    resetApplication
+    resetApplication,
+    downloadWordDocument,
+    downloadPdfDocument
   } = useVoiceConversation();
 
   return (
@@ -52,7 +54,11 @@ export function VoiceApplicationUI() {
         isVisible={isCallActive} 
       />
 
-      <CVDisplay generatedCV={generatedCV} />
+      <CVDisplay 
+        generatedCV={generatedCV} 
+        downloadWordDocument={downloadWordDocument}
+        downloadPdfDocument={downloadPdfDocument}
+      />
 
       <LoadingOverlay isProcessing={isProcessing} />
     </Card>
