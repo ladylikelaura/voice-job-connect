@@ -351,10 +351,10 @@ export default function Jobs() {
             variant="ghost" 
             size="sm" 
             className="flex flex-col items-center gap-1 h-auto py-2"
-            onClick={() => navigate('/profile/create')}
+            onClick={() => navigate('/profile')}
           >
-            <UserPlus className="w-5 h-5" />
-            <span className="text-xs">Create Profile</span>
+            <UserRound className="w-5 h-5" />
+            <span className="text-xs">Profile</span>
           </Button>
         </div>
       </nav>
