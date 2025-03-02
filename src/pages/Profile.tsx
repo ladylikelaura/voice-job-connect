@@ -6,8 +6,21 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { PenSquare, UserRound, BadgeCheck, Video, AudioWaveform, Image as ImageIcon, Star, Mail } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAccessibilitySettings } from "@/components/voiceApplication/useAccessibilitySettings";
+import { AccessibilityControls } from "@/components/voiceApplication/AccessibilityControls";
 
 const Profile = () => {
+  // Integrate accessibility settings
+  const { 
+    isScreenReaderMode, 
+    highContrast, 
+    toggleScreenReaderMode, 
+    toggleHighContrast, 
+    keyboardShortcuts, 
+    lastAnnouncement, 
+    announce 
+  } = useAccessibilitySettings();
+
   // This is placeholder data for the preview
   const profileData = {
     name: "Jane Smith",
@@ -111,228 +124,319 @@ const Profile = () => {
   // Function to render star ratings
   const renderStars = (level) => {
     return Array(5).fill(0).map((_, i) => (
-      <span key={i} className={`text-sm ${i < level ? "text-yellow-500" : "text-gray-300"}`}>★</span>
+      <span key={i} className={`text-sm ${i < level ? "text-yellow-500" : "text-gray-300"}`} aria-hidden="true">★</span>
     ));
   };
 
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <Button 
-          variant="default" 
-          className="flex items-center gap-2"
-          asChild
-        >
-          <Link to="/profile/create">
-            <PenSquare size={18} />
-            Create Profile with Skill Demos
-          </Link>
-        </Button>
+  // Accessible star rating with screen reader text
+  const renderAccessibleRating = (level, maxLevel = 5) => {
+    return (
+      <div className="flex items-center" role="img" aria-label={`Rating: ${level} out of ${maxLevel} stars`}>
+        {renderStars(level)}
+        <span className="sr-only">{level} out of {maxLevel} stars</span>
       </div>
+    );
+  };
 
-      <Card className="mb-8">
-        <CardHeader className="pb-4">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-20 h-20 border-2 border-primary">
-                <AvatarImage src="/placeholder.svg" alt={profileData.name} />
-                <AvatarFallback>
-                  <UserRound className="w-10 h-10" />
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-2xl font-bold">{profileData.name}</CardTitle>
-                  {profileData.verifications.length > 0 && (
-                    <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200">
-                      <BadgeCheck className="h-3.5 w-3.5" />
-                      Verified Professional
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-lg text-muted-foreground">{profileData.title}</p>
-                <div className="mt-2 text-sm text-muted-foreground">
-                  <p>{profileData.email}</p>
-                  <p>{profileData.location}</p>
-                </div>
-              </div>
-            </div>
+  return (
+    <div 
+      className={`container mx-auto py-8 px-4 ${highContrast ? "bg-black text-white" : ""}`}
+      role="main"
+      aria-labelledby="profile-heading"
+      tabIndex={-1}
+    >
+      <div className="flex flex-col gap-4">
+        <h1 id="profile-heading" className="sr-only">Professional Profile</h1>
+        
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+          <Button 
+            variant="default" 
+            className="flex items-center gap-2"
+            asChild
+            aria-label="Create professional profile with skill demonstrations"
+          >
+            <Link to="/profile/create">
+              <PenSquare size={18} aria-hidden="true" />
+              Create Profile with Skill Demos
+            </Link>
+          </Button>
+          
+          {/* Accessibility Controls */}
+          <div className="w-full md:w-auto">
+            <AccessibilityControls
+              isScreenReaderMode={isScreenReaderMode}
+              highContrast={highContrast}
+              toggleScreenReaderMode={toggleScreenReaderMode}
+              toggleHighContrast={toggleHighContrast}
+              keyboardShortcuts={keyboardShortcuts}
+              lastAnnouncement={lastAnnouncement}
+            />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">About</h3>
-              <p className="text-muted-foreground">{profileData.about}</p>
-            </div>
+        </div>
 
-            <Separator />
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Skills</h3>
-              <div className="flex flex-wrap gap-2">
-                {profileData.skills.map((skill, index) => {
-                  const isVerified = profileData.verifications.some(v => v.skill === skill);
-                  return (
-                    <Badge 
-                      key={index} 
-                      variant={isVerified ? "default" : "secondary"}
-                      className={`flex items-center gap-1 ${isVerified ? "pl-1" : ""}`}
+        <Card className={`mb-8 ${highContrast ? "border-white bg-black" : ""}`}>
+          <CardHeader className="pb-4">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-20 h-20 border-2 border-primary" aria-hidden="true">
+                  <AvatarImage src="/placeholder.svg" alt="" />
+                  <AvatarFallback>
+                    <UserRound className="w-10 h-10" />
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle 
+                      id="profile-name" 
+                      className={`text-2xl font-bold ${highContrast ? "text-white" : ""}`}
                     >
-                      {isVerified && <BadgeCheck className="h-3 w-3" />}
-                      {skill}
-                    </Badge>
-                  );
-                })}
+                      {profileData.name}
+                    </CardTitle>
+                    {profileData.verifications.length > 0 && (
+                      <Badge 
+                        variant={highContrast ? "outline" : "outline"} 
+                        className={`flex items-center gap-1 ${
+                          highContrast 
+                            ? "bg-blue-900 text-white border-white" 
+                            : "bg-green-50 text-green-700 border-green-200"
+                        }`}
+                      >
+                        <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                        <span>Verified Professional</span>
+                      </Badge>
+                    )}
+                  </div>
+                  <p 
+                    className={`text-lg ${highContrast ? "text-gray-300" : "text-muted-foreground"}`}
+                    id="profile-title"
+                  >
+                    {profileData.title}
+                  </p>
+                  <div className={`mt-2 text-sm ${highContrast ? "text-gray-300" : "text-muted-foreground"}`}>
+                    <p>
+                      <span className="sr-only">Email: </span>
+                      {profileData.email}
+                    </p>
+                    <p>
+                      <span className="sr-only">Location: </span>
+                      {profileData.location}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <section aria-labelledby="about-heading">
+                <h2 id="about-heading" className={`text-lg font-semibold mb-2 ${highContrast ? "text-white" : ""}`}>About</h2>
+                <p className={highContrast ? "text-gray-300" : "text-muted-foreground"}>{profileData.about}</p>
+              </section>
 
-            <Separator />
+              <Separator className={highContrast ? "bg-gray-500" : ""} />
 
-            {profileData.verifications.length > 0 && (
-              <>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Skill Verifications</h3>
-                  <div className="space-y-3">
-                    {profileData.verifications.map((verification, index) => (
-                      <div key={index} className="flex justify-between items-center border rounded-md p-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{verification.skill}</h4>
-                            <BadgeCheck className="h-4 w-4 text-green-600" />
+              <section aria-labelledby="skills-heading">
+                <h2 id="skills-heading" className={`text-lg font-semibold mb-2 ${highContrast ? "text-white" : ""}`}>Skills</h2>
+                <div className="flex flex-wrap gap-2" role="list">
+                  {profileData.skills.map((skill, index) => {
+                    const isVerified = profileData.verifications.some(v => v.skill === skill);
+                    return (
+                      <Badge 
+                        key={index} 
+                        variant={isVerified ? "default" : "secondary"}
+                        className={`flex items-center gap-1 ${isVerified ? "pl-1" : ""} ${
+                          highContrast && isVerified ? "bg-blue-700" : ""
+                        } ${highContrast && !isVerified ? "bg-gray-700 text-white" : ""}`}
+                        role="listitem"
+                      >
+                        {isVerified && <BadgeCheck className="h-3 w-3" aria-label="Verified" />}
+                        {skill}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </section>
+
+              <Separator className={highContrast ? "bg-gray-500" : ""} />
+
+              {profileData.verifications.length > 0 && (
+                <>
+                  <section aria-labelledby="verifications-heading">
+                    <h2 id="verifications-heading" className={`text-lg font-semibold mb-2 ${highContrast ? "text-white" : ""}`}>Skill Verifications</h2>
+                    <div className="space-y-3" role="list">
+                      {profileData.verifications.map((verification, index) => (
+                        <div 
+                          key={index} 
+                          className={`flex justify-between items-center border rounded-md p-3 ${
+                            highContrast ? "border-gray-500 bg-gray-900" : ""
+                          }`}
+                          role="listitem"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className={`font-medium ${highContrast ? "text-white" : ""}`}>{verification.skill}</h3>
+                              <BadgeCheck className={`h-4 w-4 ${highContrast ? "text-blue-400" : "text-green-600"}`} aria-label="Verified" />
+                            </div>
+                            <p className={`text-sm ${highContrast ? "text-gray-300" : "text-muted-foreground"}`}>
+                              Verified by {verification.by} on {new Date(verification.date).toLocaleDateString()}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">Verified by {verification.by}</p>
+                          {renderAccessibleRating(verification.level)}
                         </div>
-                        <div className="flex items-center">
-                          {renderStars(verification.level)}
-                        </div>
+                      ))}
+                    </div>
+                  </section>
+                  <Separator className={highContrast ? "bg-gray-500" : ""} />
+                </>
+              )}
+
+              {/* Verified Reviews section */}
+              {profileData.reviews && profileData.reviews.length > 0 && (
+                <>
+                  <section aria-labelledby="reviews-heading">
+                    <h2 id="reviews-heading" className={`text-lg font-semibold mb-2 ${highContrast ? "text-white" : ""}`}>Verified Reviews</h2>
+                    <div className="space-y-4" role="list">
+                      {profileData.reviews.map((review, index) => (
+                        <Card 
+                          key={index} 
+                          className={`overflow-hidden ${highContrast ? "bg-gray-900 border-gray-500" : ""}`}
+                          role="listitem"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className={`font-medium ${highContrast ? "text-white" : ""}`}>{review.reviewerName}</h3>
+                                  {review.verified && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`flex items-center gap-1 ${
+                                        highContrast 
+                                          ? "bg-blue-900 text-white border-gray-300" 
+                                          : "bg-blue-50 text-blue-700 border-blue-200"
+                                      }`}
+                                    >
+                                      <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+                                      <span>Verified</span>
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className={`text-sm ${highContrast ? "text-gray-300" : "text-muted-foreground"}`}>
+                                  {review.reviewerPosition} at {review.reviewerCompany}
+                                </p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <Mail className={`h-3 w-3 ${highContrast ? "text-gray-300" : "text-muted-foreground"}`} aria-hidden="true" />
+                                  <span className={`text-xs ${highContrast ? "text-gray-300" : "text-muted-foreground"}`} aria-label="Work email">
+                                    {review.reviewerEmail}
+                                  </span>
+                                </div>
+                              </div>
+                              {renderAccessibleRating(review.rating)}
+                            </div>
+                            <p className={`text-sm mt-2 ${highContrast ? "text-gray-200" : ""}`}>{review.text}</p>
+                            <p className={`text-xs ${highContrast ? "text-gray-400" : "text-muted-foreground"} mt-2`}>
+                              Reviewed on {new Date(review.date).toLocaleDateString()}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </section>
+                  <Separator className={highContrast ? "bg-gray-500" : ""} />
+                </>
+              )}
+
+              {profileData.demonstrations.length > 0 && (
+                <>
+                  <section aria-labelledby="demos-heading">
+                    <h2 id="demos-heading" className={`text-lg font-semibold mb-2 ${highContrast ? "text-white" : ""}`}>Skill Demonstrations</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4" role="list">
+                      {profileData.demonstrations.map((demo, index) => (
+                        <Card 
+                          key={index} 
+                          className={`overflow-hidden ${highContrast ? "bg-gray-900 border-gray-500" : ""}`}
+                          role="listitem"
+                        >
+                          <div className="relative aspect-video bg-muted">
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              {demo.type === "video" && <Video className={`h-10 w-10 ${highContrast ? "text-gray-300" : "text-muted-foreground"}`} aria-hidden="true" />}
+                              {demo.type === "audio" && <AudioWaveform className={`h-10 w-10 ${highContrast ? "text-gray-300" : "text-muted-foreground"}`} aria-hidden="true" />}
+                              {demo.type === "image" && <ImageIcon className={`h-10 w-10 ${highContrast ? "text-gray-300" : "text-muted-foreground"}`} aria-hidden="true" />}
+                            </div>
+                            <img 
+                              src={demo.thumbnail} 
+                              alt={`Thumbnail for ${demo.skill} ${demo.type} demonstration`}
+                              className="w-full h-full object-cover opacity-50" 
+                            />
+                            {demo.verified && (
+                              <Badge 
+                                className={`absolute top-2 right-2 flex items-center gap-1 ${
+                                  highContrast ? "bg-blue-700" : "bg-green-500"
+                                }`}
+                                aria-label="Verified demonstration"
+                              >
+                                <BadgeCheck className="h-3 w-3" aria-hidden="true" />
+                                <span>Verified</span>
+                              </Badge>
+                            )}
+                          </div>
+                          <CardContent className="p-3">
+                            <h3 className={`font-medium ${highContrast ? "text-white" : ""}`}>{demo.skill}</h3>
+                            <p className={`text-xs ${highContrast ? "text-gray-300" : "text-muted-foreground"} capitalize`}>
+                              {demo.type} Demonstration
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </section>
+                  <Separator className={highContrast ? "bg-gray-500" : ""} />
+                </>
+              )}
+
+              <section aria-labelledby="experience-heading">
+                <h2 id="experience-heading" className={`text-lg font-semibold mb-2 ${highContrast ? "text-white" : ""}`}>Experience</h2>
+                <div className="space-y-4" role="list">
+                  {profileData.experience.map((exp, index) => (
+                    <div key={index} role="listitem">
+                      <h3 className={`font-medium ${highContrast ? "text-white" : ""}`}>{exp.title}</h3>
+                      <div className={`flex justify-between text-sm ${highContrast ? "text-gray-300" : "text-muted-foreground"}`}>
+                        <span>{exp.company}</span>
+                        <span>{exp.period}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                <Separator />
-              </>
-            )}
-
-            {/* New Verified Reviews section */}
-            {profileData.reviews && profileData.reviews.length > 0 && (
-              <>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Verified Reviews</h3>
-                  <div className="space-y-4">
-                    {profileData.reviews.map((review, index) => (
-                      <Card key={index} className="overflow-hidden">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-medium">{review.reviewerName}</h4>
-                                {review.verified && (
-                                  <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
-                                    <BadgeCheck className="h-3 w-3" />
-                                    Verified
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {review.reviewerPosition} at {review.reviewerCompany}
-                              </p>
-                              <div className="flex items-center gap-1 mt-1">
-                                <Mail className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">{review.reviewerEmail}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center">
-                              {renderStars(review.rating)}
-                            </div>
-                          </div>
-                          <p className="text-sm mt-2">{review.text}</p>
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Reviewed on {new Date(review.date).toLocaleDateString()}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-                <Separator />
-              </>
-            )}
-
-            {profileData.demonstrations.length > 0 && (
-              <>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Skill Demonstrations</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {profileData.demonstrations.map((demo, index) => (
-                      <Card key={index} className="overflow-hidden">
-                        <div className="relative aspect-video bg-muted">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            {demo.type === "video" && <Video className="h-10 w-10 text-muted-foreground" />}
-                            {demo.type === "audio" && <AudioWaveform className="h-10 w-10 text-muted-foreground" />}
-                            {demo.type === "image" && <ImageIcon className="h-10 w-10 text-muted-foreground" />}
-                          </div>
-                          <img 
-                            src={demo.thumbnail} 
-                            alt={demo.skill}
-                            className="w-full h-full object-cover opacity-50" 
-                          />
-                          {demo.verified && (
-                            <Badge 
-                              className="absolute top-2 right-2 flex items-center gap-1 bg-green-500"
-                            >
-                              <BadgeCheck className="h-3 w-3" />
-                              Verified
-                            </Badge>
-                          )}
-                        </div>
-                        <CardContent className="p-3">
-                          <h4 className="font-medium">{demo.skill}</h4>
-                          <p className="text-xs text-muted-foreground capitalize">{demo.type} Demonstration</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-                <Separator />
-              </>
-            )}
-
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Experience</h3>
-              <div className="space-y-4">
-                {profileData.experience.map((exp, index) => (
-                  <div key={index}>
-                    <h4 className="font-medium">{exp.title}</h4>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{exp.company}</span>
-                      <span>{exp.period}</span>
+                      <p className={`mt-1 text-sm ${highContrast ? "text-gray-300" : "text-muted-foreground"}`}>{exp.description}</p>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{exp.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+              </section>
 
-            <Separator />
+              <Separator className={highContrast ? "bg-gray-500" : ""} />
 
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Education</h3>
-              <div className="space-y-2">
-                {profileData.education.map((edu, index) => (
-                  <div key={index}>
-                    <h4 className="font-medium">{edu.degree}</h4>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{edu.institution}</span>
-                      <span>{edu.year}</span>
+              <section aria-labelledby="education-heading">
+                <h2 id="education-heading" className={`text-lg font-semibold mb-2 ${highContrast ? "text-white" : ""}`}>Education</h2>
+                <div className="space-y-2" role="list">
+                  {profileData.education.map((edu, index) => (
+                    <div key={index} role="listitem">
+                      <h3 className={`font-medium ${highContrast ? "text-white" : ""}`}>{edu.degree}</h3>
+                      <div className={`flex justify-between text-sm ${highContrast ? "text-gray-300" : "text-muted-foreground"}`}>
+                        <span>{edu.institution}</span>
+                        <span>{edu.year}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </section>
             </div>
+          </CardContent>
+        </Card>
+        
+        {/* Screen reader announcements */}
+        {isScreenReaderMode && (
+          <div className="sr-only" aria-live="polite" role="status">
+            {lastAnnouncement}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
     </div>
   );
 };
