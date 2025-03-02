@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -7,10 +8,9 @@ import { PenSquare, UserRound, BadgeCheck, Video, AudioWaveform, Image as ImageI
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAccessibilitySettings } from "@/components/voiceApplication/useAccessibilitySettings";
 import { AccessibilityControls } from "@/components/voiceApplication/AccessibilityControls";
-import CVDownloadButton from '@/components/voiceApplication/CVDownloadButton';
-import { useCV } from '@/contexts/CVContext';
 
 const Profile = () => {
+  // Integrate accessibility settings
   const { 
     isScreenReaderMode, 
     highContrast, 
@@ -21,8 +21,7 @@ const Profile = () => {
     announce 
   } = useAccessibilitySettings();
 
-  const { generatedCV } = useCV();
-
+  // This is placeholder data for the preview
   const profileData = {
     name: "Jane Smith",
     title: "Front-end Developer",
@@ -87,6 +86,7 @@ const Profile = () => {
         verified: true
       }
     ],
+    // New reviews data
     reviews: [
       {
         text: "Jane is an exceptional developer with a strong eye for detail. Her React skills are outstanding, and she consistently delivers high-quality work on time.",
@@ -121,12 +121,14 @@ const Profile = () => {
     ]
   };
 
+  // Function to render star ratings
   const renderStars = (level) => {
     return Array(5).fill(0).map((_, i) => (
       <span key={i} className={`text-sm ${i < level ? "text-yellow-500" : "text-gray-300"}`} aria-hidden="true">★</span>
     ));
   };
 
+  // Accessible star rating with screen reader text
   const renderAccessibleRating = (level, maxLevel = 5) => {
     return (
       <div className="flex items-center" role="img" aria-label={`Rating: ${level} out of ${maxLevel} stars`}>
@@ -159,6 +161,7 @@ const Profile = () => {
             </Link>
           </Button>
           
+          {/* Accessibility Controls */}
           <div className="w-full md:w-auto">
             <AccessibilityControls
               isScreenReaderMode={isScreenReaderMode}
@@ -287,6 +290,7 @@ const Profile = () => {
                 </>
               )}
 
+              {/* Verified Reviews section */}
               {profileData.reviews && profileData.reviews.length > 0 && (
                 <>
                   <section aria-labelledby="reviews-heading">
@@ -426,21 +430,6 @@ const Profile = () => {
           </CardContent>
         </Card>
         
-        <div className="w-full mt-6">
-          <h2 className="text-lg font-semibold mb-3" id="cv-section">Your CV</h2>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="flex flex-col gap-2">
-              <p className="text-muted-foreground">Download your previously generated CV</p>
-              <CVDownloadButton 
-                cvData={generatedCV} 
-                variant="primary"
-                className="w-full sm:w-auto"
-                label="Download Resume"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Screen reader announcements */}
         {isScreenReaderMode && (
           <div className="sr-only" aria-live="polite" role="status">
