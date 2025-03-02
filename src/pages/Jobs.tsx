@@ -347,12 +347,15 @@ export default function Jobs() {
             <Clock className="w-5 h-5" />
             <span className="text-xs">Status</span>
           </Button>
-          <Link to="/profile/create" className="flex flex-col items-center">
-            <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
-              <UserPlus className="w-5 h-5" />
-              <span className="text-xs">Create Profile</span>
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex flex-col items-center gap-1 h-auto py-2"
+            onClick={() => navigate('/profile/create')}
+          >
+            <UserPlus className="w-5 h-5" />
+            <span className="text-xs">Create Profile</span>
+          </Button>
         </div>
       </nav>
     </div>
