@@ -1,16 +1,18 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { generateCVFromTranscript } from './cvGenerator';
 import { generateWordDocument, generatePdfDocument } from './services/documentService';
 import { supabase } from '@/integrations/supabase/client';
 import { ProcessedCV } from './types';
+import { useCV } from '@/contexts/CVContext';
 
 /**
  * Hook for handling CV generation functionality
  */
 export const useCVGeneration = () => {
-  const [generatedCV, setGeneratedCV] = useState<string | null>(null);
-  const [processedCVData, setProcessedCVData] = useState<ProcessedCV | null>(null);
+  const [generatedCVMarkdown, setGeneratedCVMarkdown] = useState<string | null>(null);
+  const { generatedCV: processedCVData, setGeneratedCV: setProcessedCVData } = useCV();
   const [isProcessing, setIsProcessing] = useState(false);
   
   /**
@@ -46,7 +48,7 @@ export const useCVGeneration = () => {
     interviewTranscript: string[], 
     cvGenerationAttemptedRef: React.MutableRefObject<boolean>
   ): Promise<void> => {
-    if (generatedCV || cvGenerationAttemptedRef.current) {
+    if (generatedCVMarkdown || cvGenerationAttemptedRef.current) {
       console.log('CV already generated or attempted, skipping');
       return;
     }
@@ -73,7 +75,7 @@ export const useCVGeneration = () => {
           
           const basicCV = generateCVFromTranscript(interviewTranscript);
           console.log('Basic CV generated successfully, setting state');
-          setGeneratedCV(basicCV);
+          setGeneratedCVMarkdown(basicCV);
           
           const enhancedCVData = await processWithClaude(agentMessages);
           
@@ -82,10 +84,14 @@ export const useCVGeneration = () => {
             console.log('Enhanced CV data set:', enhancedCVData);
             
             const enhancedMarkdown = generateEnhancedMarkdown(enhancedCVData);
-            setGeneratedCV(enhancedMarkdown);
+            setGeneratedCVMarkdown(enhancedMarkdown);
             
             toast.success("Enhanced CV generated successfully!");
           } else {
+            // Parse the basic CV to get structured data
+            const basicCVData = parseBasicCV(basicCV);
+            setProcessedCVData(basicCVData);
+            
             toast.success("Basic CV generated based on your responses!");
           }
         } catch (error) {
@@ -285,13 +291,13 @@ export const useCVGeneration = () => {
    * Generate Word document from CV data
    */
   const downloadWordDocument = () => {
-    if (!processedCVData && !generatedCV) {
+    if (!processedCVData && !generatedCVMarkdown) {
       toast.error("No CV data available to download");
       return;
     }
     
     try {
-      const dataToUse = processedCVData || parseBasicCV(generatedCV!);
+      const dataToUse = processedCVData || parseBasicCV(generatedCVMarkdown!);
       console.log('Generating Word document with data:', dataToUse);
       
       const blob = generateWordDocument(dataToUse);
@@ -316,13 +322,13 @@ export const useCVGeneration = () => {
    * Generate PDF document from CV data
    */
   const downloadPdfDocument = () => {
-    if (!processedCVData && !generatedCV) {
+    if (!processedCVData && !generatedCVMarkdown) {
       toast.error("No CV data available to download");
       return;
     }
     
     try {
-      const dataToUse = processedCVData || parseBasicCV(generatedCV!);
+      const dataToUse = processedCVData || parseBasicCV(generatedCVMarkdown!);
       console.log('Generating PDF document with data:', dataToUse);
       
       const blob = generatePdfDocument(dataToUse);
@@ -344,8 +350,8 @@ export const useCVGeneration = () => {
   };
 
   return {
-    generatedCV,
-    setGeneratedCV,
+    generatedCV: generatedCVMarkdown,
+    setGeneratedCV: setGeneratedCVMarkdown,
     processedCVData,
     isProcessing,
     setIsProcessing,

@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { VoiceApplicationUI } from '@/components/VoiceApplicationUI';
+import { useCV } from '@/contexts/CVContext';
 
 interface RemotiveJob {
   id: number;
@@ -50,6 +51,7 @@ const fetchJobs = async () => {
 export default function Jobs() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const { setGeneratedCV } = useCV();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,6 +92,22 @@ export default function Jobs() {
       window.removeEventListener('voiceApplicationEnd', handleVoiceApplicationEnd);
     };
   }, []);
+
+  useEffect(() => {
+    // Listen for CV generation events
+    const handleCVGenerated = (event: CustomEvent) => {
+      if (event.detail && event.detail.cvData) {
+        console.log('CV data received from voice application:', event.detail.cvData);
+        setGeneratedCV(event.detail.cvData);
+      }
+    };
+
+    window.addEventListener('cvGenerated', handleCVGenerated as EventListener);
+    
+    return () => {
+      window.removeEventListener('cvGenerated', handleCVGenerated as EventListener);
+    };
+  }, [setGeneratedCV]);
 
   const readJobDescription = (job: RemotiveJob) => {
     try {
