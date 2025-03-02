@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -77,15 +76,13 @@ export default function ProfileCreation() {
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('users')
         .upsert({
           id: user.id,
-          first_name: personalInfo.firstName,
-          last_name: personalInfo.lastName,
+          firstname: personalInfo.firstName,
+          lastname: personalInfo.lastName,
           email: personalInfo.email || user.email,
-          phone: personalInfo.phone,
           bio: personalInfo.bio,
-          updated_at: new Date().toISOString(),
         });
       
       if (error) throw error;
@@ -431,7 +428,7 @@ export default function ProfileCreation() {
                         <span>Status:</span>
                         {skill.status === 'draft' && <Badge variant="outline">Not Started</Badge>}
                         {skill.status === 'recorded' && <Badge variant="secondary">Recorded</Badge>}
-                        {skill.status === 'submitted' && <Badge variant="primary">Under Review</Badge>}
+                        {skill.status === 'submitted' && <Badge variant="default">Under Review</Badge>}
                         {skill.status === 'verified' && <Badge className="bg-green-500">Verified</Badge>}
                       </div>
                     </div>
@@ -470,7 +467,7 @@ export default function ProfileCreation() {
                             <p className="text-sm text-muted-foreground">{skill.description}</p>
                           </div>
                           {skill.status === 'submitted' ? (
-                            <Badge variant="primary">Pending Review</Badge>
+                            <Badge variant="default">Pending Review</Badge>
                           ) : (
                             <Badge className="bg-green-500">Verified</Badge>
                           )}
