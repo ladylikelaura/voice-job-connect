@@ -1,15 +1,25 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
-import { Separator } from "@/components/ui/separator";
 import { Mail } from "lucide-react";
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const { signInWithGoogle, user } = useAuth();
+  const location = useLocation();
+
+  // Check if redirected from OAuth
+  useEffect(() => {
+    // If there's a hash in the URL, we're likely being redirected back from OAuth
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      console.log('Detected OAuth redirect with access token');
+      toast.loading('Completing authentication...');
+    }
+  }, []);
 
   // If user is already authenticated, redirect to jobs
   if (user) {

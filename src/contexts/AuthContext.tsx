@@ -42,8 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Clear the hash fragment without triggering a reload
             window.history.replaceState(null, document.title, window.location.pathname);
             
-            // Navigate without using timeout
-            navigate('/jobs');
+            // Navigate to jobs page
+            navigate('/jobs', { replace: true });
           }
         }
       } catch (err) {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           console.log('User is authenticated, current path:', location.pathname);
           if (location.pathname === '/auth' || location.pathname === '/') {
-            navigate('/jobs');
+            navigate('/jobs', { replace: true });
           }
         }
         
@@ -84,13 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (_event === 'SIGNED_IN' && session) {
-        // Wait a small moment before navigation to ensure state is updated
-        setTimeout(() => {
-          navigate('/jobs');
-          toast.success('Successfully signed in!');
-        }, 100);
+        // Navigate immediately to jobs page
+        navigate('/jobs', { replace: true });
+        toast.success('Successfully signed in!');
       } else if (_event === 'SIGNED_OUT') {
-        navigate('/auth');
+        navigate('/auth', { replace: true });
       }
     });
 
@@ -131,8 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Get the current URL origin
       const currentOrigin = window.location.origin;
       
-      // Use the current origin as the redirect URL
-      const redirectUrl = `${currentOrigin}`;
+      // Set the redirect URL to the auth page to prevent 404 issues
+      const redirectUrl = `${currentOrigin}/auth`;
       console.log('Redirect URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
