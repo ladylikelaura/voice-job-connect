@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Clear the hash fragment without triggering a reload
             window.history.replaceState(null, document.title, window.location.pathname);
             
-            // Navigate to jobs page
+            // Navigate to jobs page with replace to prevent back navigation issues
             navigate('/jobs', { replace: true });
           }
         }
@@ -126,10 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting Google sign in...'); // Debug log
       
-      // Get the current URL origin
+      // Get the current URL origin and pathname
       const currentOrigin = window.location.origin;
       
-      // Set the redirect URL to the auth page to prevent 404 issues
+      // Set the redirect URL to the auth page to ensure we have a valid route to handle the callback
       const redirectUrl = `${currentOrigin}/auth`;
       console.log('Redirect URL:', redirectUrl);
       
