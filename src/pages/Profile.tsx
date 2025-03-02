@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { PenSquare, UserRound, BadgeCheck, Video, AudioWaveform, Image as ImageIcon } from "lucide-react";
+import { PenSquare, UserRound, BadgeCheck, Video, AudioWaveform, Image as ImageIcon, Star, Mail } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Profile = () => {
@@ -71,6 +71,39 @@ const Profile = () => {
         skill: "UI Design Sample",
         url: "/placeholder.svg",
         verified: true
+      }
+    ],
+    // New reviews data
+    reviews: [
+      {
+        text: "Jane is an exceptional developer with a strong eye for detail. Her React skills are outstanding, and she consistently delivers high-quality work on time.",
+        rating: 5,
+        reviewerName: "Michael Johnson",
+        reviewerPosition: "CTO",
+        reviewerCompany: "Tech Innovations Ltd",
+        reviewerEmail: "michael.johnson@techinnovations.com",
+        verified: true,
+        date: "2023-11-10"
+      },
+      {
+        text: "Working with Jane was a pleasure. She quickly understood our requirements and implemented solutions that exceeded our expectations.",
+        rating: 5,
+        reviewerName: "Sarah Williams",
+        reviewerPosition: "Product Manager",
+        reviewerCompany: "Digital Products Inc",
+        reviewerEmail: "s.williams@digitalproducts.com",
+        verified: true,
+        date: "2023-08-05"
+      },
+      {
+        text: "Jane's expertise in responsive design and accessibility best practices made our application much more inclusive and user-friendly.",
+        rating: 4,
+        reviewerName: "David Chen",
+        reviewerPosition: "UX Director",
+        reviewerCompany: "User Experience Group",
+        reviewerEmail: "david.chen@uxgroup.org",
+        verified: true,
+        date: "2023-05-22"
       }
     ]
   };
@@ -174,6 +207,51 @@ const Profile = () => {
                           {renderStars(verification.level)}
                         </div>
                       </div>
+                    ))}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {/* New Verified Reviews section */}
+            {profileData.reviews && profileData.reviews.length > 0 && (
+              <>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Verified Reviews</h3>
+                  <div className="space-y-4">
+                    {profileData.reviews.map((review, index) => (
+                      <Card key={index} className="overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-medium">{review.reviewerName}</h4>
+                                {review.verified && (
+                                  <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                                    <BadgeCheck className="h-3 w-3" />
+                                    Verified
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {review.reviewerPosition} at {review.reviewerCompany}
+                              </p>
+                              <div className="flex items-center gap-1 mt-1">
+                                <Mail className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">{review.reviewerEmail}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center">
+                              {renderStars(review.rating)}
+                            </div>
+                          </div>
+                          <p className="text-sm mt-2">{review.text}</p>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Reviewed on {new Date(review.date).toLocaleDateString()}
+                          </p>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 </div>
