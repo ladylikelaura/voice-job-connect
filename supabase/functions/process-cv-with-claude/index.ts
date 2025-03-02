@@ -1,151 +1,144 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("Processing CV with Claude API");
-    const claudeApiKey = Deno.env.get('CLAUDE_API_KEY');
-    
-    if (!claudeApiKey) {
-      console.error("Missing Claude API key");
+    if (!ANTHROPIC_API_KEY) {
+      console.error("Missing ANTHROPIC_API_KEY");
       return new Response(
-        JSON.stringify({ error: "Missing API key configuration" }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    const { transcriptSummary } = await req.json();
-
-    if (!transcriptSummary || transcriptSummary.length === 0) {
-      console.error("Missing transcript summary");
-      return new Response(
-        JSON.stringify({ error: "Missing transcript summary" }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({
+          error: "Server configuration error: Missing API key",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
-    console.log("Transcript summary received, calling Claude API");
+    // Parse request body
+    const { transcriptSummary, enhancedPrompt, fullContext } = await req.json();
+
+    if (!transcriptSummary && !enhancedPrompt) {
+      return new Response(
+        JSON.stringify({ error: "Missing transcript summary or prompt" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log("Received request to process CV with Claude");
     
-    // Improved prompt for better CV structure
-    const systemPrompt = `
-      You are an expert CV writer and career counselor who helps create professional CVs. 
-      
-      Your task is to extract and organize comprehensive information from an interview transcript summary into a well-structured professional CV.
-      
-      Instructions:
-      1. Carefully analyze the transcript to identify key professional details.
-      2. Use a formal, professional tone throughout the CV.
-      3. Organize information into clear, standardized sections.
-      4. Be concise yet comprehensive.
-      5. Highlight achievements and skills relevant to the person's profession.
-      6. Use professional industry terminology where appropriate.
-      7. Format dates, job titles, and other details consistently.
+    // Use the enhanced prompt if provided, or fall back to basic prompt
+    const promptToUse = enhancedPrompt || 
+      `You are a professional CV writer. Create a structured CV based on this interview transcript summary: ${transcriptSummary}. 
+      Return ONLY a JSON object with the following structure (no explanation or commentary):
+      {
+        "personalInfo": {"name": "", "email": "", "phone": "", "location": ""},
+        "professionalSummary": "",
+        "jobTitle": "",
+        "skills": [],
+        "experience": [{"role": "", "company": "", "duration": "", "responsibilities": []}],
+        "education": [{"degree": "", "institution": "", "year": ""}],
+        "certifications": [],
+        "languages": []
+      }`;
 
-      Your output should be a JSON object with these fields:
-      - personalInfo: {name, email, phone, location, linkedIn, website}
-      - professionalSummary: A compelling 3-4 sentence summary of their professional background
-      - jobTitle: Their current or most recent job title
-      - skills: Array of professional skills (aim for 6-12 relevant skills)
-      - experience: Array of work experiences, each containing {company, role, duration, responsibilities}
-        - For responsibilities, provide 3-5 bullet points per role that highlight achievements
-      - education: Array of educational background, each containing {degree, institution, year}
-      - certifications: Array of relevant professional certifications
-      - languages: Array of languages they speak
-      
-      If any information is not available in the transcript, make reasonable professional inferences based on context, but DO NOT include completely fictitious details.
-    `;
-
-    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
+    console.log("Sending request to Claude API");
+    
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': claudeApiKey,
-        'anthropic-version': '2023-06-01'
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: 'claude-3-opus-20240229',
+        model: "claude-3-haiku-20240307",
         max_tokens: 4000,
-        temperature: 0.2,
-        system: systemPrompt,
+        temperature: 0.5,
+        system: "You are a professional CV writer. Extract information from interview transcripts to create structured CVs. Always return valid JSON, even with limited information. Make logical inferences where data is missing.",
         messages: [
           {
-            role: 'user',
-            content: `Here is the interview transcript summary. Extract the relevant information to create a professional CV:\n\n${transcriptSummary}`
-          }
-        ]
-      })
+            role: "user",
+            content: promptToUse,
+          },
+        ],
+      }),
     });
 
-    if (!claudeResponse.ok) {
-      const errorData = await claudeResponse.text();
+    if (!response.ok) {
+      const errorData = await response.text();
       console.error("Claude API error:", errorData);
-      throw new Error(`Claude API error: ${claudeResponse.status} ${errorData}`);
-    }
-
-    const responseData = await claudeResponse.json();
-    console.log("Claude response received");
-    
-    // Extract the content from Claude's response
-    let cvData;
-    try {
-      // Find the JSON in the response
-      const content = responseData.content[0].text;
-      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || 
-                        content.match(/{[\s\S]*}/);
-                        
-      if (jsonMatch) {
-        const jsonString = jsonMatch[1] || jsonMatch[0];
-        cvData = JSON.parse(jsonString);
-        console.log("Successfully parsed CV data from Claude response");
-      } else {
-        // Try to extract JSON from the full content
-        cvData = JSON.parse(content);
-      }
-    } catch (error) {
-      console.error("Error parsing Claude response:", error);
-      console.log("Claude raw response:", responseData.content[0].text);
-      
-      // Return a simple fallback structure
       return new Response(
-        JSON.stringify({ 
-          data: {
-            personalInfo: { name: "Professional", email: "", phone: "" },
-            professionalSummary: "Experienced professional with expertise in their field.",
-            jobTitle: "Professional",
-            skills: [],
-            experience: [],
-            education: [],
-            certifications: [],
-            languages: []
-          },
-          message: "Error parsing AI response, using fallback structure"
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Error calling Claude API", details: errorData }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
-    // Return the processed CV data
-    return new Response(
-      JSON.stringify({ data: cvData }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-    
+    const claudeResponse = await response.json();
+    console.log("Received response from Claude API");
+
+    // Extract JSON from Claude's response - it might be embedded in markdown code blocks
+    let extractedData;
+    try {
+      const content = claudeResponse.content[0].text;
+      console.log("Raw Claude response:", content);
+      
+      // Try to extract JSON from markdown code blocks first
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        extractedData = JSON.parse(jsonMatch[1].trim());
+      } else {
+        // If no code blocks, try to parse the whole response
+        extractedData = JSON.parse(content);
+      }
+      
+      console.log("Successfully extracted CV data");
+    } catch (error) {
+      console.error("Error parsing Claude response:", error);
+      console.log("Claude raw response:", claudeResponse.content[0].text);
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to parse CV data from Claude response",
+          rawResponse: claudeResponse.content[0].text 
+        }),
+        {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return new Response(JSON.stringify({ data: extractedData }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("Error in process-cv-with-claude function:", error);
+    console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: "Internal server error", details: error.message }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
