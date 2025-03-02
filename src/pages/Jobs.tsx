@@ -1,9 +1,9 @@
-import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search } from "lucide-react";
+import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -347,10 +347,12 @@ export default function Jobs() {
             <Clock className="w-5 h-5" />
             <span className="text-xs">Status</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
-            <UserRound className="w-5 h-5" />
-            <span className="text-xs">Profile</span>
-          </Button>
+          <Link to="/profile/create" className="flex flex-col items-center">
+            <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+              <UserPlus className="w-5 h-5" />
+              <span className="text-xs">Create Profile</span>
+            </Button>
+          </Link>
         </div>
       </nav>
     </div>
