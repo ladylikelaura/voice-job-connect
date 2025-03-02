@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,14 +23,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
-    // Handle hash fragments from OAuth redirects
-    const handleHashFragment = async () => {
+    // Initialize auth state first before any navigation
+    const initializeAuth = async () => {
+      setLoading(true);
+      try {
+        console.log('Initializing auth state...');
+        
+        // Get current session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        // Set initial user state
+        setUser(session?.user ?? null);
+        
+        // Handle initial navigation based on auth state
+        if (session?.user) {
+          console.log('User is authenticated, current path:', location.pathname);
+          
+          if (location.pathname === '/auth' || location.pathname === '/') {
+            console.log('Redirecting authenticated user to /jobs');
+            navigate('/jobs', { replace: true });
+          }
+        } else if (location.pathname !== '/' && location.pathname !== '/auth') {
+          // If not authenticated and not on public routes, redirect to auth
+          console.log('User not authenticated, redirecting to /auth');
+          navigate('/auth', { replace: true });
+        }
+        
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    // Handle OAuth redirect completions
+    const handleOAuthResponse = async () => {
       try {
         // Check if URL contains access_token
         if (window.location.hash && window.location.hash.includes('access_token')) {
           console.log('Found access token in URL fragment, processing OAuth response');
           
-          // Let Supabase handle the hash fragment to complete auth
           const { data, error } = await supabase.auth.getSession();
           
           if (error) {
@@ -37,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             toast.error('Authentication failed. Please try again.');
           } else if (data.session) {
             console.log('Successfully processed OAuth response');
+            setUser(data.session.user);
             toast.success('Successfully signed in!');
             
             // Clear the hash fragment without triggering a reload
@@ -47,48 +87,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (err) {
-        console.error('Error handling hash fragment:', err);
+        console.error('Error handling OAuth response:', err);
         toast.error('Authentication failed. Please try again.');
       }
     };
 
-    // Call the handler when component mounts
-    handleHashFragment();
+    // Run auth initialization and OAuth response handling
+    handleOAuthResponse();
+    initializeAuth();
 
-    // Check active sessions and subscribe to auth changes
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-        
-        // Only navigate if we're not already on a protected page
-        if (session?.user) {
-          console.log('User is authenticated, current path:', location.pathname);
-          if (location.pathname === '/auth' || location.pathname === '/') {
-            navigate('/jobs', { replace: true });
-          }
-        }
-        
-        // Set loading to false AFTER navigation decisions
-        setLoading(false);
-      } catch (error) {
-        console.error('Session check error:', error);
-        setLoading(false);
-      }
-    };
-    
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session); // Debug log
+    // Set up auth state change subscription
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, 'Session:', session ? 'exists' : 'null');
+      
       setUser(session?.user ?? null);
       
-      if (_event === 'SIGNED_IN' && session) {
-        // Navigate immediately to jobs page
+      if (event === 'SIGNED_IN' && session) {
+        console.log('SIGNED_IN event received, navigating to /jobs');
         navigate('/jobs', { replace: true });
         toast.success('Successfully signed in!');
-      } else if (_event === 'SIGNED_OUT') {
+      } else if (event === 'SIGNED_OUT') {
+        console.log('SIGNED_OUT event received, navigating to /auth');
         navigate('/auth', { replace: true });
+        toast.success('Successfully signed out!');
       }
     });
 
@@ -126,10 +147,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('Starting Google sign in...'); // Debug log
       
-      // Get the current URL origin and pathname
+      // Get the current URL origin
       const currentOrigin = window.location.origin;
       
-      // Set the redirect URL to the auth page to ensure we have a valid route to handle the callback
+      // Set the redirect URL to the auth page
       const redirectUrl = `${currentOrigin}/auth`;
       console.log('Redirect URL:', redirectUrl);
       
@@ -158,7 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Redirecting to OAuth URL:', data.url);
       
-      // Standard redirect
+      // Standard redirect to Google auth
       window.location.href = data.url;
       
     } catch (error: any) {
@@ -172,7 +193,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      navigate('/auth');
       toast.success('Successfully signed out');
     } catch (error: any) {
       toast.error(error.message);
@@ -182,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, signUp, signIn, signInWithGoogle, signOut }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }

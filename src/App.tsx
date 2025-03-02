@@ -21,7 +21,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-lg font-medium text-primary">Loading...</div>
+      </div>
+    );
   }
   
   if (!user) {
@@ -32,6 +36,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  const { loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-lg font-medium text-primary">Loading authentication...</div>
+      </div>
+    );
+  }
+  
   return (
     <Routes>
       <Route path="/" element={<Index />} />
