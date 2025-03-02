@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { PenSquare } from "lucide-react";
+import { PenSquare, UserRound, BadgeCheck, Video, AudioWaveform, Image as ImageIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Profile = () => {
   // This is placeholder data for the preview
@@ -35,7 +36,50 @@ const Profile = () => {
         institution: "University of California",
         year: "2017"
       }
+    ],
+    verifications: [
+      {
+        skill: "React",
+        level: 5,
+        by: "Expert Reviewer",
+        date: "2023-09-15"
+      },
+      {
+        skill: "Accessibility",
+        level: 4,
+        by: "Senior Developer",
+        date: "2023-08-22"
+      }
+    ],
+    demonstrations: [
+      {
+        type: "video",
+        skill: "React Component Demo",
+        url: "https://example.com/demo-video",
+        thumbnail: "/placeholder.svg",
+        verified: true
+      },
+      {
+        type: "audio",
+        skill: "Technical Interview",
+        url: "https://example.com/interview-audio",
+        thumbnail: "/placeholder.svg",
+        verified: false
+      },
+      {
+        type: "image",
+        skill: "UI Design Sample",
+        url: "/placeholder.svg",
+        verified: true
+      }
     ]
+  };
+
+  // Function to render star ratings
+  const renderStars = (level) => {
+    return Array(5).fill(0).map((_, i) => (
+      <span key={i} className={`text-sm ${i < level ? "text-yellow-500" : "text-gray-300"}`}>★</span>
+    ));
   };
 
   return (
@@ -56,12 +100,28 @@ const Profile = () => {
       <Card className="mb-8">
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-            <div>
-              <CardTitle className="text-2xl font-bold">{profileData.name}</CardTitle>
-              <p className="text-lg text-muted-foreground">{profileData.title}</p>
-              <div className="mt-2 text-sm text-muted-foreground">
-                <p>{profileData.email}</p>
-                <p>{profileData.location}</p>
+            <div className="flex items-center gap-4">
+              <Avatar className="w-20 h-20 border-2 border-primary">
+                <AvatarImage src="/placeholder.svg" alt={profileData.name} />
+                <AvatarFallback>
+                  <UserRound className="w-10 h-10" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-2xl font-bold">{profileData.name}</CardTitle>
+                  {profileData.verifications.length > 0 && (
+                    <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200">
+                      <BadgeCheck className="h-3.5 w-3.5" />
+                      Verified Professional
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-lg text-muted-foreground">{profileData.title}</p>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <p>{profileData.email}</p>
+                  <p>{profileData.location}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -78,13 +138,87 @@ const Profile = () => {
             <div>
               <h3 className="text-lg font-semibold mb-2">Skills</h3>
               <div className="flex flex-wrap gap-2">
-                {profileData.skills.map((skill, index) => (
-                  <Badge key={index} variant="secondary">{skill}</Badge>
-                ))}
+                {profileData.skills.map((skill, index) => {
+                  const isVerified = profileData.verifications.some(v => v.skill === skill);
+                  return (
+                    <Badge 
+                      key={index} 
+                      variant={isVerified ? "default" : "secondary"}
+                      className={`flex items-center gap-1 ${isVerified ? "pl-1" : ""}`}
+                    >
+                      {isVerified && <BadgeCheck className="h-3 w-3" />}
+                      {skill}
+                    </Badge>
+                  );
+                })}
               </div>
             </div>
 
             <Separator />
+
+            {profileData.verifications.length > 0 && (
+              <>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Skill Verifications</h3>
+                  <div className="space-y-3">
+                    {profileData.verifications.map((verification, index) => (
+                      <div key={index} className="flex justify-between items-center border rounded-md p-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{verification.skill}</h4>
+                            <BadgeCheck className="h-4 w-4 text-green-600" />
+                          </div>
+                          <p className="text-sm text-muted-foreground">Verified by {verification.by}</p>
+                        </div>
+                        <div className="flex items-center">
+                          {renderStars(verification.level)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
+
+            {profileData.demonstrations.length > 0 && (
+              <>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Skill Demonstrations</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {profileData.demonstrations.map((demo, index) => (
+                      <Card key={index} className="overflow-hidden">
+                        <div className="relative aspect-video bg-muted">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            {demo.type === "video" && <Video className="h-10 w-10 text-muted-foreground" />}
+                            {demo.type === "audio" && <AudioWaveform className="h-10 w-10 text-muted-foreground" />}
+                            {demo.type === "image" && <ImageIcon className="h-10 w-10 text-muted-foreground" />}
+                          </div>
+                          <img 
+                            src={demo.thumbnail} 
+                            alt={demo.skill}
+                            className="w-full h-full object-cover opacity-50" 
+                          />
+                          {demo.verified && (
+                            <Badge 
+                              className="absolute top-2 right-2 flex items-center gap-1 bg-green-500"
+                            >
+                              <BadgeCheck className="h-3 w-3" />
+                              Verified
+                            </Badge>
+                          )}
+                        </div>
+                        <CardContent className="p-3">
+                          <h4 className="font-medium">{demo.skill}</h4>
+                          <p className="text-xs text-muted-foreground capitalize">{demo.type} Demonstration</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
 
             <div>
               <h3 className="text-lg font-semibold mb-2">Experience</h3>
