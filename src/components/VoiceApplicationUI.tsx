@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, Download, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,13 +5,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
 import { useCVGeneration } from './voiceApplication/useCVGeneration';
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { generateCVFromTranscript } from './voiceApplication/cvGenerator';
-import { generateWordDocument, generatePdfDocument } from './voiceApplication/services/documentService';
-import { ProcessedCV } from './voiceApplication/types';
 
 /**
  * UI component for voice-based CV generation
