@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -132,7 +131,12 @@ export default function SavedJobs() {
             <Bookmark className="w-5 h-5" />
             <span className="text-xs">Saved</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex flex-col items-center gap-1 h-auto py-2"
+            onClick={() => navigate('/status')}
+          >
             <Clock className="w-5 h-5" />
             <span className="text-xs">Status</span>
           </Button>

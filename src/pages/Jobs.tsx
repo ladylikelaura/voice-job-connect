@@ -374,7 +374,12 @@ export default function Jobs() {
             <Bookmark className="w-5 h-5" />
             <span className="text-xs">Saved</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex flex-col items-center gap-1 h-auto py-2"
+            onClick={() => navigate('/status')}
+          >
             <Clock className="w-5 h-5" />
             <span className="text-xs">Status</span>
           </Button>
