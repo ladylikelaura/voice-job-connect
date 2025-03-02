@@ -1,4 +1,4 @@
-import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search, UserPlus } from "lucide-react";
+import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { VoiceApplicationUI } from '@/components/VoiceApplicationUI';
+import { useSavedJobs } from "@/hooks/useSavedJobs";
 
 interface RemotiveJob {
   id: number;
@@ -57,6 +58,7 @@ export default function Jobs() {
   const [visibleJobs, setVisibleJobs] = useState(10);
   const [isVoiceApplicationActive, setIsVoiceApplicationActive] = useState(false);
   const voiceApplicationRef = useRef<HTMLDivElement>(null);
+  const { savedJobs, saveJob, removeJob, isJobSaved } = useSavedJobs();
 
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['jobs'],
@@ -146,6 +148,16 @@ export default function Jobs() {
 
   const loadMore = () => {
     setVisibleJobs(prev => prev + 10);
+  };
+
+  const handleSaveJob = (job: RemotiveJob) => {
+    if (isJobSaved(job.id)) {
+      removeJob(job.id);
+      toast.success(`Removed "${job.title}" from saved jobs`);
+    } else {
+      saveJob(job);
+      toast.success(`Saved "${job.title}" to your bookmarks`);
+    }
   };
 
   const filteredJobs = jobs?.filter(job => {
@@ -277,7 +289,21 @@ export default function Jobs() {
                 {visibleFilteredJobs.map((job) => (
                   <Card key={job.id} className="overflow-hidden">
                     <div className="p-4 sm:p-6">
-                      <CardTitle className="text-base sm:text-lg mb-1">{job.title}</CardTitle>
+                      <div className="flex justify-between items-start mb-1">
+                        <CardTitle className="text-base sm:text-lg">{job.title}</CardTitle>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleSaveJob(job)}
+                          className={cn(
+                            "h-8 w-8 p-0", 
+                            isJobSaved(job.id) && "text-primary"
+                          )}
+                          aria-label={isJobSaved(job.id) ? "Remove from saved jobs" : "Save job"}
+                        >
+                          <Bookmark className={cn("h-4 w-4", isJobSaved(job.id) && "fill-current")} />
+                        </Button>
+                      </div>
                       <CardDescription className="text-xs sm:text-sm mb-2">
                         {job.company_name} • {job.job_type || 'Full Time'}
                         {job.candidate_required_location && ` • ${job.candidate_required_location}`}
@@ -339,7 +365,12 @@ export default function Jobs() {
             <Briefcase className="w-5 h-5" />
             <span className="text-xs">Jobs</span>
           </Button>
-          <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex flex-col items-center gap-1 h-auto py-2"
+            onClick={() => navigate('/saved')}
+          >
             <Bookmark className="w-5 h-5" />
             <span className="text-xs">Saved</span>
           </Button>
