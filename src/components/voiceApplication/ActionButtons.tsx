@@ -36,6 +36,10 @@ interface ActionButtonsProps {
    * Handler for resetting the application to its initial state
    */
   onResetApplication: () => void;
+  /**
+   * Indicates whether screen reader mode is enabled
+   */
+  isScreenReaderMode?: boolean;
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -46,7 +50,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   onStartConversation,
   onEndConversation,
   onToggleMute,
-  onResetApplication
+  onResetApplication,
+  isScreenReaderMode = false
 }) => {
   return (
     <div className="flex flex-wrap justify-center gap-4">
@@ -56,6 +61,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           disabled={isProcessing}
           className="flex items-center gap-2 py-6 px-8 text-base"
           size="lg"
+          aria-label={isScreenReaderMode ? "Start interview process" : undefined}
         >
           <Mic className="w-5 h-5" />
           Start Interview
@@ -66,6 +72,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           variant="destructive"
           className="flex items-center gap-2 py-6 px-8 text-base"
           size="lg"
+          aria-label={isScreenReaderMode ? "End interview process" : undefined}
         >
           <Square className="w-5 h-5" />
           End Interview
@@ -78,6 +85,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           variant="outline"
           className="flex items-center gap-2 py-6 px-8 text-base"
           size="lg"
+          aria-label={isScreenReaderMode ? (isMuted ? "Unmute microphone" : "Mute microphone") : undefined}
         >
           {isMuted ? (
             <>
@@ -99,6 +107,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
           variant="outline"
           className="flex items-center gap-2 py-6 px-8 text-base"
           size="lg"
+          aria-label={isScreenReaderMode ? "Reset application and start over" : undefined}
         >
           <RefreshCw className="w-5 h-5" />
           Start Over

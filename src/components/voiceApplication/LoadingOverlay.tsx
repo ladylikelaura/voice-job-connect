@@ -6,9 +6,13 @@ interface LoadingOverlayProps {
    * Indicates whether the application is currently processing data
    */
   isProcessing: boolean;
+  /**
+   * Indicates whether screen reader mode is enabled
+   */
+  isScreenReaderMode?: boolean;
 }
 
-export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isProcessing }) => {
+export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isProcessing, isScreenReaderMode = false }) => {
   if (!isProcessing) return null;
   
   return (
@@ -19,7 +23,12 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isProcessing }) 
           role="status"
           aria-label="Loading"
         ></div>
-        <p className="text-sm font-medium">Processing...</p>
+        <p className="text-sm font-medium">
+          Processing...
+          {isScreenReaderMode && (
+            <span className="sr-only">Please wait while your data is being processed.</span>
+          )}
+        </p>
       </div>
     </div>
   );
