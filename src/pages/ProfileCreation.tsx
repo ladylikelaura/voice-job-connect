@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,12 +123,16 @@ const ProfileCreation = () => {
       setRecordingTime(0);
       
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-        
-        // Announce time every 10 seconds for screen reader users
-        if (isScreenReaderMode && (prev + 1) % 10 === 0) {
-          announce(`Recording in progress. ${Math.floor((prev + 1) / 60)} minutes ${(prev + 1) % 60} seconds elapsed.`);
-        }
+        setRecordingTime((prevTime) => {
+          const newTime = prevTime + 1;
+          
+          // Announce time every 10 seconds for screen reader users
+          if (isScreenReaderMode && newTime % 10 === 0) {
+            announce(`Recording in progress. ${Math.floor(newTime / 60)} minutes ${newTime % 60} seconds elapsed.`);
+          }
+          
+          return newTime;
+        });
       }, 1000);
 
       mediaRecorder.ondataavailable = (event) => {
