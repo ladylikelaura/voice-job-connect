@@ -20,6 +20,9 @@ const Auth = () => {
         console.log('Detected OAuth redirect with access token');
         setIsProcessingOAuth(true);
         toast.loading('Completing authentication...');
+      } else if (window.location.hash && window.location.hash.includes('error=')) {
+        console.error('OAuth error detected in URL hash');
+        toast.error('Authentication failed. Please try again.');
       }
     };
 

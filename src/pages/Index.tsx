@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -17,22 +16,13 @@ const Index = () => {
       // If hash includes access_token, we're in an OAuth flow
       if (window.location.hash && window.location.hash.includes('access_token')) {
         try {
-          console.log('Found access token in URL hash, processing OAuth response');
-          
-          // Let Supabase handle the token
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('Error processing OAuth token:', error);
-            toast.error('Authentication failed. Please try again.');
-          } else if (data.session) {
-            console.log('Successfully authenticated with OAuth provider');
-            toast.success('Successfully signed in!');
-            navigate('/jobs');
-            return;
-          }
+          console.log('Found access token in URL hash on Index page, redirecting to /auth for handling');
+          // Instead of processing here, redirect to auth page that knows how to handle it
+          window.location.href = `${window.location.origin}/auth${window.location.hash}`;
+          return;
         } catch (err) {
           console.error('Error handling auth token:', err);
+          toast.error('Authentication error. Please try again.');
         }
       }
     };

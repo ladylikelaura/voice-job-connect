@@ -65,10 +65,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Handle OAuth redirect completions
     const handleOAuthResponse = async () => {
       try {
-        // Check if URL contains access_token
-        if (window.location.hash && window.location.hash.includes('access_token')) {
-          console.log('Found access token in URL fragment, processing OAuth response');
+        // Check URL hash parameters for OAuth redirect
+        const hasAccessToken = window.location.hash && window.location.hash.includes('access_token');
+        const hasError = window.location.hash && window.location.hash.includes('error=');
+        
+        if (hasAccessToken || hasError) {
+          console.log('Processing OAuth response...');
           
+          if (hasError) {
+            // Extract error message from hash
+            const errorMatch = window.location.hash.match(/error=([^&]*)/);
+            const errorDescription = window.location.hash.match(/error_description=([^&]*)/);
+            const errorMsg = errorDescription ? decodeURIComponent(errorDescription[1]) : 'Authentication failed';
+            console.error('OAuth error:', errorMsg);
+            toast.error(errorMsg);
+            
+            // Clean up URL
+            window.history.replaceState(null, document.title, window.location.pathname);
+            return;
+          }
+          
+          // Process successful OAuth login
           const { data, error } = await supabase.auth.getSession();
           
           if (error) {
@@ -79,11 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(data.session.user);
             toast.success('Successfully signed in!');
             
-            // Clear the hash fragment without triggering a reload
-            window.history.replaceState(null, document.title, window.location.pathname);
+            // Clean up the URL without triggering navigation
+            window.history.replaceState(null, document.title, '/auth');
             
-            // Navigate to jobs page with replace to prevent back navigation issues
-            navigate('/jobs', { replace: true });
+            // Then navigate to jobs page
+            setTimeout(() => navigate('/jobs', { replace: true }), 100);
           }
         }
       } catch (err) {
@@ -145,9 +162,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Starting Google sign in...'); // Debug log
+      console.log('Starting Google sign in...'); 
       
-      // Get the current URL origin
+      // Get the current URL origin for redirect
       const currentOrigin = window.location.origin;
       
       // Set the redirect URL to the auth page
@@ -179,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log('Redirecting to OAuth URL:', data.url);
       
-      // Standard redirect to Google auth
+      // Redirect to Google auth page
       window.location.href = data.url;
       
     } catch (error: any) {
