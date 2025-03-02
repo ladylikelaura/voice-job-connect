@@ -1,8 +1,7 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -20,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Handle hash fragments from OAuth redirects
@@ -42,10 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Clear the hash fragment without triggering a reload
             window.history.replaceState(null, document.title, window.location.pathname);
             
-            // Use timeout to ensure state is updated before navigation
-            setTimeout(() => {
-              navigate('/jobs');
-            }, 100);
+            // Navigate without using timeout
+            navigate('/jobs');
           }
         }
       } catch (err) {
@@ -62,14 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
-        setLoading(false);
         
+        // Only navigate if we're not already on a protected page
         if (session?.user) {
-          // Don't use window.location for page navigation, use React Router instead
-          if (window.location.pathname === '/auth') {
+          console.log('User is authenticated, current path:', location.pathname);
+          if (location.pathname === '/auth' || location.pathname === '/') {
             navigate('/jobs');
           }
         }
+        
+        // Set loading to false AFTER navigation decisions
+        setLoading(false);
       } catch (error) {
         console.error('Session check error:', error);
         setLoading(false);
@@ -83,17 +84,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (_event === 'SIGNED_IN' && session) {
-        // Ensure we navigate to the jobs page on sign in
-        navigate('/jobs');
-        toast.success('Successfully signed in!');
+        // Wait a small moment before navigation to ensure state is updated
+        setTimeout(() => {
+          navigate('/jobs');
+          toast.success('Successfully signed in!');
+        }, 100);
       } else if (_event === 'SIGNED_OUT') {
-        // Ensure we navigate to the auth page on sign out
         navigate('/auth');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const signUp = async (email: string, password: string) => {
     try {

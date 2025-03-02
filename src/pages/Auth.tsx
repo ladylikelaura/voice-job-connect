@@ -5,11 +5,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Separator } from "@/components/ui/separator";
 import { Mail } from "lucide-react";
-import { supabase } from '@/integrations/supabase/client';
+import { Navigate } from 'react-router-dom';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, user } = useAuth();
+
+  // If user is already authenticated, redirect to jobs
+  if (user) {
+    return <Navigate to="/jobs" replace />;
+  }
 
   const handleEmailAuth = async () => {
     // This will redirect to the Supabase email auth page
