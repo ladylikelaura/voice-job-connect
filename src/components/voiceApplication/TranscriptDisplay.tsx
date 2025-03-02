@@ -1,77 +1,115 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Mic, User, Bot } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { MessageCircleMore } from 'lucide-react';
 
 interface TranscriptDisplayProps {
-  /**
-   * Array of transcript lines from the interview
-   */
   interviewTranscript: string[];
-  /**
-   * Whether the transcript should be visible
-   */
   isVisible: boolean;
+  isScreenReaderMode?: boolean;
 }
 
 export const TranscriptDisplay: React.FC<TranscriptDisplayProps> = ({ 
   interviewTranscript, 
-  isVisible 
+  isVisible,
+  isScreenReaderMode = false
 }) => {
   const transcriptEndRef = useRef<HTMLDivElement>(null);
-  const transcriptContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
-  // Auto-scroll to the bottom of the transcript container instead of the entire page
+  // Scroll to bottom on new messages
   useEffect(() => {
-    if (transcriptEndRef.current && transcriptContainerRef.current) {
-      // Only scroll the container, not the whole page
-      transcriptContainerRef.current.scrollTop = transcriptContainerRef.current.scrollHeight;
+    if (isVisible && transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [interviewTranscript]);
+  }, [interviewTranscript, isVisible]);
   
-  if (!isVisible || interviewTranscript.length === 0) return null;
-  
-  return (
-    <div className="mt-4 p-4 bg-gradient-to-br from-muted/60 to-muted/30 backdrop-blur-sm rounded-md max-h-60 overflow-y-auto border border-muted-foreground/10 shadow-inner"
-         ref={transcriptContainerRef}>
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-medium flex items-center gap-2">
-          <Mic className="h-4 w-4 text-primary" />
-          Interview Transcript
-        </h4>
-        <Badge variant="outline" className="text-xs bg-primary/10">
-          {interviewTranscript.length} exchanges
-        </Badge>
-      </div>
+  // Announce new messages for screen readers
+  useEffect(() => {
+    if (isScreenReaderMode && isVisible && interviewTranscript.length > 0) {
+      const lastMessage = interviewTranscript[interviewTranscript.length - 1];
       
-      <div className="space-y-3">
-        {interviewTranscript.map((line, index) => {
-          const isAgent = line.startsWith('Agent:');
-          return (
-            <div 
-              key={index} 
-              className={`flex items-start gap-2 p-2 rounded-lg transition-all ${
-                isAgent 
-                  ? 'bg-primary/5 border-l-2 border-primary' 
-                  : 'bg-secondary/5 border-l-2 border-secondary'
-              }`}
-            >
-              {isAgent ? (
-                <Bot className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-              ) : (
-                <User className="h-4 w-4 mt-0.5 text-secondary shrink-0" />
-              )}
-              <p className="text-xs leading-relaxed">
-                <span className={`font-medium ${isAgent ? 'text-primary' : 'text-secondary'}`}>
-                  {isAgent ? 'Agent: ' : 'You: '}
-                </span>
-                {isAgent ? line.substring(6).trim() : line.substring(4).trim()}
-              </p>
-            </div>
-          );
-        })}
+      // Check if it's a new agent message to announce it
+      if (lastMessage && lastMessage.startsWith("Agent:")) {
+        const cleanMessage = lastMessage.replace("Agent:", "");
+        
+        // Create an announcement that will be read by screen readers
+        const srAnnouncement = document.createElement('div');
+        srAnnouncement.setAttribute('aria-live', 'polite');
+        srAnnouncement.className = 'sr-only';
+        srAnnouncement.textContent = `Agent says: ${cleanMessage}`;
+        
+        // Add to DOM, then remove after it's been announced
+        document.body.appendChild(srAnnouncement);
+        setTimeout(() => {
+          if (srAnnouncement.parentNode) {
+            document.body.removeChild(srAnnouncement);
+          }
+        }, 5000);
+      }
+    }
+  }, [interviewTranscript, isScreenReaderMode, isVisible]);
+
+  if (!isVisible || interviewTranscript.length === 0) {
+    return null;
+  }
+
+  const formatMessage = (message: string, index: number) => {
+    if (message.startsWith("Agent:")) {
+      return (
+        <div 
+          key={index} 
+          className="bg-primary/10 p-3 rounded-lg mb-2"
+          role="listitem"
+        >
+          <span className="font-semibold text-primary">Agent: </span>
+          {message.replace("Agent:", "")}
+        </div>
+      );
+    } else if (message.startsWith("You:")) {
+      return (
+        <div 
+          key={index} 
+          className="bg-muted/30 p-3 rounded-lg ml-4 mb-2"
+          role="listitem"
+        >
+          <span className="font-semibold">You: </span>
+          {message.replace("You:", "")}
+        </div>
+      );
+    }
+    return <div key={index}>{message}</div>;
+  };
+
+  return (
+    <div 
+      ref={containerRef}
+      className="mt-4 border rounded-lg p-4 max-h-80 overflow-y-auto" 
+      role="region"
+      aria-label="Interview Transcript"
+    >
+      <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
+        <MessageCircleMore className="w-4 h-4 text-primary" />
+        Interview Transcript
+      </h4>
+      
+      <div 
+        className="space-y-1"
+        role="list"
+        aria-live={isScreenReaderMode ? "polite" : "off"}
+      >
+        {interviewTranscript.map((message, index) => formatMessage(message, index))}
         <div ref={transcriptEndRef} />
       </div>
+      
+      {isScreenReaderMode && (
+        <button 
+          className="sr-only"
+          aria-label="Jump to latest message"
+          onClick={() => transcriptEndRef.current?.scrollIntoView()}
+        >
+          Jump to latest message
+        </button>
+      )}
     </div>
   );
 };

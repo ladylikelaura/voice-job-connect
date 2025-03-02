@@ -1,4 +1,3 @@
-
 export interface VoiceConversationHook {
   isCallActive: boolean;
   isProcessing: boolean;
@@ -39,4 +38,12 @@ export interface ProcessedCV {
   }>;
   certifications: string[];
   languages: string[];
+}
+
+/**
+ * Keyboard shortcut definition
+ */
+export interface KeyboardShortcut {
+  key: string;
+  description: string;
 }
