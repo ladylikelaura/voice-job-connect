@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Jobs from "./pages/Jobs";
+import Profile from "./pages/Profile";
 import ProfileCreation from "./pages/ProfileCreation";
 import { useAccessibilitySettings } from "./components/voiceApplication/useAccessibilitySettings";
 
@@ -29,6 +30,7 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/jobs" element={<Jobs />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/create" element={<ProfileCreation />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

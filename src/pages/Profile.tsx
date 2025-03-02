@@ -1,139 +1,126 @@
 
-import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
-import { UserPlus, User, Video, CheckSquare, CheckCircle, Star, Play, Medal, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import { PenSquare } from "lucide-react";
 
 const Profile = () => {
-  const navigate = useNavigate();
-
-  const goToProfileCreation = () => {
-    navigate('/profile/create');
+  // This is placeholder data for the preview
+  const profileData = {
+    name: "Jane Smith",
+    title: "Front-end Developer",
+    email: "jane.smith@example.com",
+    location: "San Francisco, CA",
+    about: "Passionate front-end developer with expertise in React, TypeScript, and modern web technologies. I love creating intuitive, accessible, and responsive user interfaces.",
+    skills: ["React", "TypeScript", "JavaScript", "HTML/CSS", "Tailwind CSS", "Accessibility", "UI/UX Design", "Git"],
+    experience: [
+      {
+        title: "Senior Front-end Developer",
+        company: "Tech Solutions Inc.",
+        period: "2020 - Present",
+        description: "Led development of responsive web applications, mentored junior developers, and implemented best practices for accessibility and performance."
+      },
+      {
+        title: "Front-end Developer",
+        company: "Web Creations LLC",
+        period: "2017 - 2020",
+        description: "Developed and maintained client websites using React and modern JavaScript frameworks."
+      }
+    ],
+    education: [
+      {
+        degree: "B.S. Computer Science",
+        institution: "University of California",
+        year: "2017"
+      }
+    ]
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-6">
         <Button 
-          onClick={goToProfileCreation}
+          variant="default" 
           className="flex items-center gap-2"
-          aria-label="Create profile with skill demonstrations"
+          asChild
         >
-          <UserPlus className="h-4 w-4" />
-          Create Profile with Skill Demos
+          <Link to="/profile/create">
+            <PenSquare size={18} />
+            Create Profile with Skill Demos
+          </Link>
         </Button>
       </div>
 
-      {/* Profile Preview - This shows how it will look after filling in details */}
-      <Card className="mb-8 overflow-hidden">
-        <div className="h-40 bg-gradient-to-r from-primary/20 to-primary/40 relative">
-          <div className="absolute -bottom-12 left-8">
-            <div className="h-24 w-24 rounded-full bg-gray-200 border-4 border-white flex items-center justify-center text-gray-400">
-              <User className="h-12 w-12" />
-            </div>
-          </div>
-        </div>
-        
-        <CardHeader className="pt-16">
-          <div className="flex justify-between items-start">
+      <Card className="mb-8">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
             <div>
-              <CardTitle className="text-2xl">John Doe</CardTitle>
-              <CardDescription>Full-Stack Developer</CardDescription>
+              <CardTitle className="text-2xl font-bold">{profileData.name}</CardTitle>
+              <p className="text-lg text-muted-foreground">{profileData.title}</p>
+              <div className="mt-2 text-sm text-muted-foreground">
+                <p>{profileData.email}</p>
+                <p>{profileData.location}</p>
+              </div>
             </div>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <CheckCircle className="h-3 w-3 text-green-500" />
-              Profile Verified
-            </Badge>
           </div>
         </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="text-lg font-medium mb-2">About</h3>
-            <p className="text-muted-foreground text-sm">
-              Passionate full-stack developer with 5+ years of experience building web applications with React, Node.js, and cloud technologies. Focused on creating accessible and performant user experiences.
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-              <Medal className="h-4 w-4 text-primary" />
-              Verified Skills
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {["React", "TypeScript", "Node.js", "Accessibility"].map((skill, index) => (
-                <Card key={index} className="p-4">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-medium">{skill}</h4>
-                    <div className="flex items-center">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star 
-                          key={i}
-                          className={`h-4 w-4 ${i < 4 ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`}
-                        />
-                      ))}
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">About</h3>
+              <p className="text-muted-foreground">{profileData.about}</p>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {profileData.skills.map((skill, index) => (
+                  <Badge key={index} variant="secondary">{skill}</Badge>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Experience</h3>
+              <div className="space-y-4">
+                {profileData.experience.map((exp, index) => (
+                  <div key={index}>
+                    <h4 className="font-medium">{exp.title}</h4>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>{exp.company}</span>
+                      <span>{exp.period}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">{exp.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Education</h3>
+              <div className="space-y-2">
+                {profileData.education.map((edu, index) => (
+                  <div key={index}>
+                    <h4 className="font-medium">{edu.degree}</h4>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>{edu.institution}</span>
+                      <span>{edu.year}</span>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Button size="sm" variant="outline" className="flex items-center gap-1 h-8">
-                      <Play className="h-3 w-3" />
-                      View Demo
-                    </Button>
-                    <Badge variant="secondary" className="flex items-center gap-1 h-6">
-                      <CheckCircle className="h-3 w-3" />
-                      Verified
-                    </Badge>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              Professional Experience
-            </h3>
-            <div className="space-y-4">
-              <div className="border-l-2 border-primary/30 pl-4 py-1">
-                <h4 className="font-medium">Senior Developer</h4>
-                <p className="text-sm text-muted-foreground">TechCorp Inc. • 2020 - Present</p>
-                <p className="text-sm mt-1">
-                  Led development of enterprise web applications using React and TypeScript.
-                </p>
-              </div>
-              <div className="border-l-2 border-primary/30 pl-4 py-1">
-                <h4 className="font-medium">Frontend Developer</h4>
-                <p className="text-sm text-muted-foreground">WebSolutions • 2018 - 2020</p>
-                <p className="text-sm mt-1">
-                  Built responsive web interfaces and improved accessibility compliance.
-                </p>
+                ))}
               </div>
             </div>
           </div>
         </CardContent>
-        
-        <CardFooter className="border-t pt-6 flex justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Video className="h-4 w-4 text-primary" />
-            <span>4 Skill Demonstrations</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CheckSquare className="h-4 w-4 text-primary" />
-            <span>All Skills Verified</span>
-          </div>
-        </CardFooter>
       </Card>
-      
-      <div className="bg-muted p-4 rounded-lg">
-        <h3 className="text-lg font-medium mb-2">About Profile Creation</h3>
-        <p className="text-sm text-muted-foreground">
-          Create your professional profile with video demonstrations of your skills. Get verified by experts to stand out to employers. Click "Create Profile with Skill Demos" to get started.
-        </p>
-      </div>
     </div>
   );
 };
