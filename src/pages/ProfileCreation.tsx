@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,13 +86,11 @@ const ProfileCreation = () => {
         });
         const url = URL.createObjectURL(blob);
         
-        // Add to recorded videos
         setRecordedVideos(prev => [
           ...prev, 
           { skill, url, verified: false }
         ]);
         
-        // Cleanup
         stream.getTracks().forEach(track => track.stop());
         if (videoRef.current) {
           videoRef.current.srcObject = null;
@@ -153,9 +150,8 @@ const ProfileCreation = () => {
 
   // Request verification for a skill
   const requestVerification = (skill: string) => {
-    // Simulating verification from peers
     setTimeout(() => {
-      const level = Math.floor(Math.random() * 5) + 1; // Random level 1-5
+      const level = Math.floor(Math.random() * 5) + 1;
       setVerifications(prev => [
         ...prev,
         { 
@@ -165,7 +161,6 @@ const ProfileCreation = () => {
         }
       ]);
       
-      // Mark the video as verified
       setRecordedVideos(prev => 
         prev.map(v => v.skill === skill ? {...v, verified: true} : v)
       );
@@ -197,13 +192,13 @@ const ProfileCreation = () => {
       if (session?.session?.user?.id) {
         const userId = session.session.user.id;
         
-        // Save to users table
         const { error } = await supabase
           .from('users')
           .update({
             firstname: fullName.split(' ')[0],
             lastname: fullName.split(' ').slice(1).join(' '),
-            bio: bio
+            bio: bio,
+            role: 'user'
           })
           .eq('id', userId);
         
@@ -214,7 +209,6 @@ const ProfileCreation = () => {
           description: "Your profile has been successfully created.",
         });
         
-        // Navigate to home page
         navigate('/');
       } else {
         toast({
