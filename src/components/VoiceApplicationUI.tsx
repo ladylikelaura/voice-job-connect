@@ -35,7 +35,7 @@ export const VoiceApplicationUI: React.FC = () => {
     downloadPdfDocument
   } = useCVGeneration();
   
-  // Mock simplified version of useWhisper since we don't have the actual package
+  // Mock implementation of useWhisper since we don't have the actual package
   const {
     recording,
     transcribing,
