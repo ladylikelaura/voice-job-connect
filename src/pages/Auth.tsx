@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Separator } from "@/components/ui/separator";
-import { Mail } from "lucide-react";
+import { Mail, UserPlus } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
+import { Link } from 'react-router-dom';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -68,6 +69,17 @@ const Auth = () => {
             <Mail className="w-6 h-6" />
             Continue with Email
           </Button>
+          
+          <Link to="/profile/create" className="block w-full">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-3 py-6 text-base font-medium"
+              aria-label="Create a profile with skill demonstrations"
+            >
+              <UserPlus className="w-6 h-6" />
+              Create Profile with Skill Demos
+            </Button>
+          </Link>
         </div>
 
         <div className="text-center">
