@@ -4,30 +4,32 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Mail } from "lucide-react";
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isProcessingOAuth, setIsProcessingOAuth] = useState(false);
   const { signInWithGoogle, user } = useAuth();
+  const location = useLocation();
 
   // Check if redirected from OAuth
   useEffect(() => {
     const checkOAuthRedirect = async () => {
       // If there's a hash in the URL, we're likely being redirected back from OAuth
-      if (window.location.hash && window.location.hash.includes('access_token')) {
+      if (location.hash && location.hash.includes('access_token')) {
         console.log('Detected OAuth redirect with access token');
         setIsProcessingOAuth(true);
         toast.loading('Completing authentication...');
-      } else if (window.location.hash && window.location.hash.includes('error=')) {
-        console.error('OAuth error detected in URL hash');
-        toast.error('Authentication failed. Please try again.');
+      } else if (location.hash && location.hash.includes('error=')) {
+        console.error('OAuth error detected in URL hash:', location.hash);
+        const errorMessage = decodeURIComponent(location.hash.split('error_description=')[1]?.split('&')[0] || 'Authentication failed');
+        toast.error(`Authentication error: ${errorMessage}`);
       }
     };
 
     checkOAuthRedirect();
-  }, []);
+  }, [location.hash]);
 
   // If user is already authenticated, redirect to jobs
   if (user) {

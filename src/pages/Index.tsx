@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -17,8 +18,10 @@ const Index = () => {
       if (window.location.hash && window.location.hash.includes('access_token')) {
         try {
           console.log('Found access token in URL hash on Index page, redirecting to /auth for handling');
-          // Instead of processing here, redirect to auth page that knows how to handle it
-          window.location.href = `${window.location.origin}/auth${window.location.hash}`;
+          // Create the full redirect URL with the hash
+          const redirectUrl = `/auth${window.location.hash}`;
+          // Use navigate instead of direct location change for better history management
+          navigate(redirectUrl, { replace: true });
           return;
         } catch (err) {
           console.error('Error handling auth token:', err);
@@ -122,19 +125,23 @@ const Index = () => {
   return <div className="min-h-screen bg-background p-4 flex flex-col items-center animate-fade-in">
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Hero Image */}
-        <div className="w-full aspect-square bg-muted rounded-lg overflow-hidden">
+        <div className="w-full aspect-square bg-muted rounded-lg overflow-hidden" role="img" aria-label="Welcome to Jobbify illustration">
           <img alt="Welcome illustration" src="/lovable-uploads/c20f19b1-7cd3-4216-ba84-2a41ca306628.png" className="w-full h-full object-scale-down" />
         </div>
 
         {/* Welcome Text */}
         <div className="text-center space-y-4 px-4">
-          <h1 className="text-2xl font-semibold text-foreground">Welcome to Jobbify!</h1>
-          <p className="text-muted-foreground">Learn about our job search process where we make job opportunities accessible for everyone.</p>
+          <h1 className="text-2xl font-semibold text-foreground" tabIndex={0}>Welcome to Jobbify!</h1>
+          <p className="text-muted-foreground" tabIndex={0}>Learn about our job search process where we make job opportunities accessible for everyone.</p>
         </div>
 
         {/* CTA Buttons */}
         <div className="w-full space-y-4 px-4">
-          <Button onClick={handleGetStarted} className="w-full text-base text-zinc-50 bg-gray-900 hover:bg-gray-800 py-[32px]">
+          <Button 
+            onClick={handleGetStarted} 
+            className="w-full text-base text-zinc-50 bg-gray-900 hover:bg-gray-800 py-[32px]"
+            aria-label="Get Started with Jobbify"
+          >
             Get Started
           </Button>
           
@@ -143,6 +150,7 @@ const Index = () => {
             onClick={toggleVoiceOver} 
             aria-pressed={isVoiceEnabled}
             className={`w-full text-base flex flex-col gap-1 items-center py-[32px] ${isVoiceEnabled ? 'bg-blue-100' : ''}`}
+            aria-label={isPlaying ? "Voice playback in progress" : isVoiceEnabled ? "Disable VoiceOver" : "Enable VoiceOver"}
           >
             {isPlaying ? "Playing..." : isVoiceEnabled ? "Disable VoiceOver" : "Enable VoiceOver"}
             <span className="text-sm text-muted-foreground">

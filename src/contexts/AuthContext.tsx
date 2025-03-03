@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,11 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('Redirecting authenticated user to /jobs');
             navigate('/jobs', { replace: true });
           }
-        } else if (location.pathname !== '/' && location.pathname !== '/auth') {
-          // If not authenticated and not on public routes, redirect to auth
-          console.log('User not authenticated, redirecting to /auth');
-          navigate('/auth', { replace: true });
-        }
+        } 
         
       } catch (err) {
         console.error('Error initializing auth:', err);
@@ -64,48 +59,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     // Handle OAuth redirect completions
     const handleOAuthResponse = async () => {
-      try {
-        // Check URL hash parameters for OAuth redirect
-        const hasAccessToken = window.location.hash && window.location.hash.includes('access_token');
-        const hasError = window.location.hash && window.location.hash.includes('error=');
-        
-        if (hasAccessToken || hasError) {
-          console.log('Processing OAuth response...');
+      // Check URL hash parameters for OAuth redirect
+      const hasAccessToken = location.hash && location.hash.includes('access_token');
+      const hasError = location.hash && location.hash.includes('error=');
+      
+      if (hasAccessToken || hasError) {
+        try {
+          console.log('Processing OAuth response on path:', location.pathname);
           
           if (hasError) {
             // Extract error message from hash
-            const errorMatch = window.location.hash.match(/error=([^&]*)/);
-            const errorDescription = window.location.hash.match(/error_description=([^&]*)/);
+            const errorMatch = location.hash.match(/error=([^&]*)/);
+            const errorDescription = location.hash.match(/error_description=([^&]*)/);
             const errorMsg = errorDescription ? decodeURIComponent(errorDescription[1]) : 'Authentication failed';
             console.error('OAuth error:', errorMsg);
             toast.error(errorMsg);
             
-            // Clean up URL
-            window.history.replaceState(null, document.title, window.location.pathname);
+            // Clean up URL without navigation
+            window.history.replaceState(null, document.title, location.pathname);
             return;
           }
           
-          // Process successful OAuth login
-          const { data, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('Error processing OAuth response:', error);
-            toast.error('Authentication failed. Please try again.');
-          } else if (data.session) {
-            console.log('Successfully processed OAuth response');
-            setUser(data.session.user);
-            toast.success('Successfully signed in!');
+          if (location.pathname === '/auth') {
+            // Process successful OAuth login
+            const { data, error } = await supabase.auth.getSession();
             
-            // Clean up the URL without triggering navigation
-            window.history.replaceState(null, document.title, '/auth');
-            
-            // Then navigate to jobs page
-            setTimeout(() => navigate('/jobs', { replace: true }), 100);
+            if (error) {
+              console.error('Error processing OAuth response:', error);
+              toast.error('Authentication failed. Please try again.');
+            } else if (data.session) {
+              console.log('Successfully processed OAuth response');
+              setUser(data.session.user);
+              toast.success('Successfully signed in!');
+              
+              // Clean up the URL without triggering navigation
+              window.history.replaceState(null, document.title, '/auth');
+              
+              // Then navigate to jobs page
+              setTimeout(() => navigate('/jobs', { replace: true }), 500);
+            }
           }
+        } catch (err) {
+          console.error('Error handling OAuth response:', err);
+          toast.error('Authentication failed. Please try again.');
         }
-      } catch (err) {
-        console.error('Error handling OAuth response:', err);
-        toast.error('Authentication failed. Please try again.');
       }
     };
 
@@ -131,7 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, location.pathname]);
+  }, [navigate, location]);
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -219,7 +216,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, signUp, signIn, signInWithGoogle, signOut }}>
-      {children}
+      {loading ? (
+        <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-live="polite">
+          <div className="animate-pulse text-lg font-medium text-primary">Loading authentication...</div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
