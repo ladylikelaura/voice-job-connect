@@ -25,6 +25,9 @@ const Auth = () => {
         console.error('OAuth error detected in URL hash:', location.hash);
         const errorMessage = decodeURIComponent(location.hash.split('error_description=')[1]?.split('&')[0] || 'Authentication failed');
         toast.error(`Authentication error: ${errorMessage}`);
+        
+        // Clean up the URL hash on error
+        window.history.replaceState(null, document.title, window.location.pathname);
       }
     };
 
@@ -33,6 +36,7 @@ const Auth = () => {
 
   // If user is already authenticated, redirect to jobs
   if (user) {
+    console.log('User authenticated in Auth component, redirecting to /jobs');
     return <Navigate to="/jobs" replace />;
   }
 
@@ -52,6 +56,7 @@ const Auth = () => {
           className="text-2xl font-semibold text-center"
           tabIndex={0}
           aria-level={1}
+          aria-live="polite"
         >
           {isProcessingOAuth 
             ? 'Completing Authentication...' 
@@ -115,6 +120,21 @@ const Auth = () => {
             </Button>
           </div>
         )}
+        
+        {/* Screen reader announcement for authentication status */}
+        <div 
+          className="sr-only" 
+          role="status" 
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {isProcessingOAuth 
+            ? "Authentication is in progress, please wait." 
+            : isSignUp 
+              ? "Sign up page. Use the form to create a new account." 
+              : "Sign in page. Use the form to access your account."
+          }
+        </div>
       </Card>
     </div>
   );

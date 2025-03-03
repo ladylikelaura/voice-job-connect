@@ -14,6 +14,7 @@ import Status from "./pages/Status";
 import Profile from "./pages/Profile";
 import ProfileCreation from "./pages/ProfileCreation";
 import { useAccessibilitySettings } from "./components/voiceApplication/useAccessibilitySettings";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 
 const queryClient = new QueryClient();
 
@@ -22,13 +23,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-lg font-medium text-primary">Loading...</div>
+      <div 
+        className="min-h-screen flex items-center justify-center bg-background"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <LoadingSpinner message="Loading..." />
       </div>
     );
   }
   
   if (!user) {
+    console.log("User not authenticated, redirecting to /auth from protected route");
     return <Navigate to="/auth" replace />;
   }
   
@@ -40,8 +47,13 @@ function AppRoutes() {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-lg font-medium text-primary">Loading authentication...</div>
+      <div 
+        className="min-h-screen flex items-center justify-center bg-background"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <LoadingSpinner message="Loading authentication..." />
       </div>
     );
   }
@@ -64,7 +76,10 @@ function App() {
   const { highContrast } = useAccessibilitySettings();
   
   return (
-    <div className={highContrast ? "high-contrast-mode" : ""}>
+    <div 
+      className={highContrast ? "high-contrast-mode" : ""}
+      aria-label="Jobbify Application"
+    >
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />

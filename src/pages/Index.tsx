@@ -56,20 +56,53 @@ const Index = () => {
       setIsPlaying(true);
       toast.info("Using browser's built-in voice capabilities");
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = () => {
+      try {
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Add event handlers with error handling
+        utterance.onend = () => {
+          setIsPlaying(false);
+        };
+        
+        utterance.onerror = (event) => {
+          console.error("Speech synthesis error:", event);
+          setIsPlaying(false);
+          toast.error("Browser speech synthesis failed");
+        };
+        
+        // Clear any previous utterances
+        window.speechSynthesis.cancel();
+        
+        // Force use available voices
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          // Try to find a good default voice
+          const defaultVoice = voices.find(voice => 
+            voice.default || voice.name.includes('English') || voice.lang.startsWith('en-')
+          );
+          
+          if (defaultVoice) {
+            utterance.voice = defaultVoice;
+          }
+        }
+        
+        window.speechSynthesis.speak(utterance);
+        
+        // Ensure utterance is working
+        setTimeout(() => {
+          if (window.speechSynthesis.speaking === false && window.speechSynthesis.pending === false) {
+            console.warn("Speech synthesis may not have started properly, attempting retry");
+            window.speechSynthesis.speak(utterance);
+          }
+        }, 250);
+        
+        return true;
+      } catch (error) {
+        console.error("Speech synthesis exception:", error);
         setIsPlaying(false);
-      };
-      utterance.onerror = () => {
-        setIsPlaying(false);
-        toast.error("Browser speech synthesis failed");
-      };
-      
-      // Clear any previous utterances
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-      
-      return true;
+        toast.error("Browser speech synthesis failed with exception");
+        return false;
+      }
     }
     return false;
   };
@@ -100,15 +133,34 @@ const Index = () => {
         setAudioElement(audio);
         audio.onplay = () => setIsPlaying(true);
         audio.onended = () => setIsPlaying(false);
-        audio.onerror = () => {
-          console.error('Audio playback error');
+        audio.onerror = (e) => {
+          console.error('Audio playback error:', e);
           setIsPlaying(false);
           // Try browser fallback if audio playback fails
           if (!useBrowserSpeechSynthesis(welcomeText)) {
             toast.error("Voice playback is not supported in your browser");
           }
         };
-        await audio.play();
+        
+        try {
+          // Ensure we handle the play promise rejection
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              console.error("Audio play promise error:", error);
+              // Try browser fallback on playback failure
+              if (!useBrowserSpeechSynthesis(welcomeText)) {
+                toast.error("Voice playback is not supported in your browser");
+              }
+            });
+          }
+        } catch (playError) {
+          console.error("Audio play exception:", playError);
+          // Try browser fallback on exception
+          if (!useBrowserSpeechSynthesis(welcomeText)) {
+            toast.error("Voice playback is not supported in your browser");
+          }
+        }
       } else {
         throw new Error("No audio data received");
       }
@@ -122,7 +174,12 @@ const Index = () => {
     }
   };
 
-  return <div className="min-h-screen bg-background p-4 flex flex-col items-center animate-fade-in">
+  return (
+    <div 
+      className="min-h-screen bg-background p-4 flex flex-col items-center animate-fade-in"
+      role="main"
+      aria-label="Jobbify welcome page"
+    >
       <div className="w-full max-w-md flex flex-col items-center gap-8">
         {/* Hero Image */}
         <div className="w-full aspect-square bg-muted rounded-lg overflow-hidden" role="img" aria-label="Welcome to Jobbify illustration">
@@ -131,8 +188,8 @@ const Index = () => {
 
         {/* Welcome Text */}
         <div className="text-center space-y-4 px-4">
-          <h1 className="text-2xl font-semibold text-foreground" tabIndex={0}>Welcome to Jobbify!</h1>
-          <p className="text-muted-foreground" tabIndex={0}>Learn about our job search process where we make job opportunities accessible for everyone.</p>
+          <h1 className="text-2xl font-semibold text-foreground" tabIndex={0} aria-live="polite">Welcome to Jobbify!</h1>
+          <p className="text-muted-foreground" tabIndex={0} aria-live="polite">Learn about our job search process where we make job opportunities accessible for everyone.</p>
         </div>
 
         {/* CTA Buttons */}
@@ -157,9 +214,25 @@ const Index = () => {
               Screen reader assistance available
             </span>
           </Button>
+          
+          {/* Hidden screen reader announcement */}
+          <div 
+            className="sr-only" 
+            role="status" 
+            aria-live="polite" 
+            aria-atomic="true"
+          >
+            {isVoiceEnabled 
+              ? isPlaying 
+                ? "Voice playback is currently in progress" 
+                : "Voice over is enabled. Click the button again to disable."
+              : "Voice over is currently disabled. Click the button to enable audio narration."
+            }
+          </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Index;
