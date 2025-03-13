@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Mail } from "lucide-react";
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const Auth = () => {
@@ -12,15 +12,18 @@ const Auth = () => {
   const [isProcessingOAuth, setIsProcessingOAuth] = useState(false);
   const { signInWithGoogle, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Check if redirected from OAuth
   useEffect(() => {
     const checkOAuthRedirect = async () => {
       // If there's a hash in the URL, we're likely being redirected back from OAuth
       if (location.hash && location.hash.includes('access_token')) {
-        console.log('Detected OAuth redirect with access token');
+        console.log('Detected OAuth redirect with access token in Auth component');
         setIsProcessingOAuth(true);
         toast.loading('Completing authentication...');
+        
+        // The auth state change listener in useAuthListeners will handle the actual navigation
       } else if (location.hash && location.hash.includes('error=')) {
         console.error('OAuth error detected in URL hash:', location.hash);
         const errorMessage = decodeURIComponent(location.hash.split('error_description=')[1]?.split('&')[0] || 'Authentication failed');

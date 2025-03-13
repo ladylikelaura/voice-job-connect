@@ -44,10 +44,10 @@ export function useAuthListeners({
           
           if (location.pathname === '/auth' || location.pathname === '/') {
             console.log('Redirecting authenticated user to /jobs');
+            // Use replace: true to prevent back navigation to login page
             navigate('/jobs', { replace: true });
           }
         } 
-        
       } catch (err) {
         console.error('Error initializing auth:', err);
       } finally {
@@ -90,11 +90,11 @@ export function useAuthListeners({
               setUser(data.session.user);
               toast.success('Successfully signed in!');
               
-              // Clean up the URL without triggering navigation
+              // First clean up the URL without triggering navigation
               window.history.replaceState(null, document.title, '/auth');
               
-              // Then navigate to jobs page
-              setTimeout(() => navigate('/jobs', { replace: true }), 500);
+              // Then navigate to jobs page with replace to prevent back navigation to login
+              navigate('/jobs', { replace: true });
             }
           }
         } catch (err) {
@@ -116,6 +116,7 @@ export function useAuthListeners({
       
       if (event === 'SIGNED_IN' && session) {
         console.log('SIGNED_IN event received, navigating to /jobs');
+        // Use replace: true to prevent back navigation to login page
         navigate('/jobs', { replace: true });
         toast.success('Successfully signed in!');
       } else if (event === 'SIGNED_OUT') {

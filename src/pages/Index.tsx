@@ -20,7 +20,7 @@ const Index = () => {
           console.log('Found access token in URL hash on Index page, redirecting to /auth for handling');
           // Create the full redirect URL with the hash
           const redirectUrl = `/auth${window.location.hash}`;
-          // Use navigate instead of direct location change for better history management
+          // Redirect to auth page to handle the OAuth response
           navigate(redirectUrl, { replace: true });
           return;
         } catch (err) {

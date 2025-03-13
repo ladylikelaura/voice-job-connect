@@ -16,6 +16,7 @@ export function useAuthMethods({ navigate }: UseAuthMethodsProps) {
       });
       if (error) throw error;
       toast.success('Check your email for the confirmation link!');
+      // Do not navigate here - wait for auth state change
     } catch (error: any) {
       toast.error(error.message);
       throw error;
@@ -24,11 +25,14 @@ export function useAuthMethods({ navigate }: UseAuthMethodsProps) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
+      
+      // Do not navigate here - wait for auth state change to handle it
+      console.log('SignIn successful, auth state change will trigger navigation');
     } catch (error: any) {
       toast.error(error.message);
       throw error;
@@ -42,7 +46,7 @@ export function useAuthMethods({ navigate }: UseAuthMethodsProps) {
       // Get the current URL origin for redirect
       const currentOrigin = window.location.origin;
       
-      // Set the redirect URL to the auth page
+      // Set the redirect URL to the auth page explicitly
       const redirectUrl = `${currentOrigin}/auth`;
       console.log('Redirect URL:', redirectUrl);
       
@@ -86,6 +90,7 @@ export function useAuthMethods({ navigate }: UseAuthMethodsProps) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       toast.success('Successfully signed out');
+      // Do not navigate here - wait for auth state change to handle it
     } catch (error: any) {
       toast.error(error.message);
       throw error;
