@@ -18,37 +18,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Set loading to false and provide mock user and functions
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hook with auth listeners
-  useAuthListeners({
-    setUser,
-    setLoading,
-    navigate,
-    location
-  });
-
-  // Hook with auth methods
+  // Simplified auth methods that just console log
   const { signUp, signIn, signInWithGoogle, signOut } = useAuthMethods({ navigate });
 
   return (
     <AuthContext.Provider value={{ user, loading, signUp, signIn, signInWithGoogle, signOut }}>
-      {loading ? (
-        <div 
-          className="min-h-screen flex items-center justify-center bg-background" 
-          role="status" 
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <LoadingSpinner />
-          <div className="sr-only">Loading authentication. Please wait.</div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 }

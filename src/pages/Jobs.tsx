@@ -1,12 +1,10 @@
-import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Bookmark, Clock, UserRound, Headphones, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { VoiceApplicationUI } from '@/components/VoiceApplicationUI';
@@ -50,7 +48,6 @@ const fetchJobs = async () => {
 
 export default function Jobs() {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
   const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,12 +61,6 @@ export default function Jobs() {
     queryKey: ['jobs'],
     queryFn: fetchJobs,
   });
-
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
 
   useEffect(() => {
     const handleVoiceApplicationStart = () => {
@@ -202,11 +193,6 @@ export default function Jobs() {
                 {screenReaderEnabled ? "Screen Reader On" : "Screen Reader Off"}
               </span>
             </Button>
-            {user && (
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
-                Sign Out
-              </Button>
-            )}
           </div>
         </div>
       </nav>
