@@ -11,6 +11,7 @@ export function useAuthMethods({ navigate }: UseAuthMethodsProps) {
   const signUp = async (email: string, password: string) => {
     console.log('Mock sign up with:', email, password);
     toast.success('Sign up successful (mock)');
+    navigate('/jobs');
     return Promise.resolve();
   };
 
